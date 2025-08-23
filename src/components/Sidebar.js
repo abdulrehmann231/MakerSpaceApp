@@ -1,10 +1,18 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { signout } from '@/lib/api'
 
 export default function Sidebar({ firstname = "User" }) {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = async (e) => {
+    e.preventDefault()
+    await signout()
+    router.push('/login')
+  }
 
   return (
     <div className="sidebar sidebar-left">
@@ -58,7 +66,7 @@ export default function Sidebar({ firstname = "User" }) {
         </ul>
       </nav>
       <div className="profile-link text-center">
-        <a href="/login" className="btn btn-link text-white btn-block">Logout</a>
+        <a href="#" onClick={handleLogout} className="btn btn-link text-white btn-block">Logout</a>
       </div>
     </div>
   )

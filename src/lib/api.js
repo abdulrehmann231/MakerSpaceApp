@@ -19,9 +19,19 @@ export async function signin(email, password) {
 }
 
 export async function signout() {
-  console.log('Signout called')
-  // TODO: Implement signout
-  return true
+  try {
+    // Call the signout API to clear HttpOnly cookies server-side
+    const response = await fetch('/api/auth/signout', {
+      method: 'POST',
+      credentials: 'include'
+    });
+    
+
+    return true;
+  } catch (error) {
+    console.error('Signout error:', error);
+    return false;
+  }
 }
 
 export async function register(email, password, firstname, lastname) {
