@@ -1,0 +1,234 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { getAvailability, formatDate, dateString, registerBooking } from '@/lib/api'
+
+export default function BookingModal() {
+  const [availableBookings, setAvailableBookings] = useState(null)
+  const [selectedDayBookings, setSelectedDayBookings] = useState([])
+  const [disabledStartTimes, setDisabledStartTimes] = useState([])
+  const [disabledEndTimes, setDisabledEndTimes] = useState([])
+  const [npeople, setNpeople] = useState(1)
+  const [selectedDay, setSelectedDay] = useState(0)
+  const [selectedStart, setSelectedStart] = useState(null)
+  const [selectedEnd, setSelectedEnd] = useState(null)
+
+  useEffect(() => {
+    reload()
+  }, [])
+
+  const reload = async () => {
+    try {
+      const data = await getAvailability(dateString(0), dateString(14))
+      if (data) {
+        const bookingsData = data.msg
+        setAvailableBookings(bookingsData)
+        setSelectedStart(Object.keys(bookingsData[selectedDay])[0])
+        setSelectedEnd(Object.keys(bookingsData[selectedDay])[1])
+        updateMenus(bookingsData, selectedDay, Object.keys(bookingsData[selectedDay])[0], Object.keys(bookingsData[selectedDay])[1], npeople)
+      }
+    } catch (error) {
+      console.error('Error loading availability:', error)
+    }
+  }
+
+  const updateMenus = (bookings = availableBookings, day = selectedDay, start = selectedStart, end = selectedEnd, people = npeople) => {
+    if (!bookings) return
+
+    const selectedStartTime = Math.max(start || 0, 0)
+    const selectedEndTime = end || selectedEnd
+    const selectedPeople = people || npeople
+    const selectedDayValue = day || selectedDay
+
+    const dayBookings = bookings[selectedDayValue] || []
+
+    const date = new Date()
+    const time = parseInt(date.toLocaleString('en-GB', { hour: '2-digit', timeZone: 'Europe/Athens' }))
+    
+    const newDisabledStartTimes = dayBookings.map((e, i) => {
+      return selectedPeople > parseInt(e) || (selectedDayValue == 0 && i < time + 2)
+    })
+
+    let newSelectedStart = selectedStartTime
+    if (newDisabledStartTimes[selectedStartTime] === true) {
+      newSelectedStart = newDisabledStartTimes.findIndex((a) => a === false)
+    }
+
+    const newDisabledEndTimes = dayBookings.map((e, i) => {
+      const j = i + 1
+      let disabled = false
+      if (newSelectedStart >= j) disabled = true
+      for (let k = newSelectedStart; k < j; k++) {
+        if (selectedPeople > parseInt(dayBookings[k])) disabled = true
+      }
+      return disabled
+    })
+
+    let newSelectedEnd = selectedEndTime
+    if (newDisabledEndTimes[newSelectedEnd - 1] === true) {
+      newSelectedEnd = newDisabledEndTimes.findIndex((a) => a === false) + 1
+    }
+
+    setSelectedDayBookings(dayBookings)
+    setDisabledStartTimes(newDisabledStartTimes)
+    setDisabledEndTimes(newDisabledEndTimes)
+    setSelectedStart(newSelectedStart)
+    setSelectedEnd(newSelectedEnd)
+    setSelectedDay(selectedDayValue)
+    setNpeople(selectedPeople)
+  }
+
+  const updatePeople = (e) => {
+    updateMenus(availableBookings, selectedDay, selectedStart, selectedEnd, parseInt(e.target.value))
+  }
+
+  const updateDay = (e) => {
+    updateMenus(availableBookings, parseInt(e.target.value), selectedStart, selectedEnd, npeople)
+  }
+
+  const updateStartTime = (e) => {
+    updateMenus(availableBookings, selectedDay, parseInt(e.target.value), selectedEnd, npeople)
+  }
+
+  const updateEndTime = (e) => {
+    updateMenus(availableBookings, selectedDay, selectedStart, parseInt(e.target.value), npeople)
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      await registerBooking(
+        dateString(parseInt(selectedDay)), 
+        selectedStart, 
+        selectedEnd, 
+        npeople
+      )
+      window.location.reload()
+    } catch (error) {
+      console.error('Error creating booking:', error)
+    }
+    
+    // Hide modal using Bootstrap
+    if (typeof window !== 'undefined' && window.$) {
+      window.$('#hireme').modal('hide')
+    }
+  }
+
+  return (
+    <div className="modal fade" id="hireme" tabIndex="-1" role="dialog" aria-hidden="true">
+      <div className="modal-dialog" role="document">
+        <div className="modal-content">
+          <div className="background bg-45 rounded theme-header">
+            <img src="/img/background.png" alt="" />
+          </div>
+          <div className="modal-header">
+            <h5 className="text-white">New booking</h5>
+            <button type="button" className="close text-white" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+
+          <div className="modal-body">
+            <div className="row">
+              <div className="col mt-3">
+                <form onSubmit={handleSubmit} name="booking">
+                  <div className="form-group">
+                    <label>Number of people:</label>
+                    <select 
+                      className="form-control" 
+                      id="people" 
+                      name="people" 
+                      value={npeople} 
+                      onChange={updatePeople}
+                    >
+                      {Array.from(Array(5), (e, i) => (
+                        <option key={i + 1} value={i + 1}>{i + 1}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Date:</label>
+                    <select 
+                      className="form-control" 
+                      value={selectedDay} 
+                      onChange={updateDay}
+                    >
+                      {(availableBookings || []).map((e, i) => {
+                        let dateName = ""
+                        if (i === 0) {
+                          dateName = "Today"
+                        } else if (i === 1) {
+                          dateName = "Tomorrow"
+                        } else {
+                          dateName = formatDate(new Date(Date.now() + 24 * 60 * 60 * 1000 * parseInt(i)))
+                        }
+                        return <option key={i} value={i}>{dateName}</option>
+                      })}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Starting from:</label>
+                    <select 
+                      className="form-control" 
+                      value={selectedStart} 
+                      onChange={updateStartTime} 
+                      disabled={!disabledStartTimes.includes(false)}
+                    >
+                      {selectedDayBookings.map((e, i) => (
+                        <option 
+                          key={i} 
+                          value={i} 
+                          disabled={disabledStartTimes[i]}
+                        >
+                          {i}:00 ({e})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Until:</label>
+                    <select 
+                      className="form-control" 
+                      value={selectedEnd} 
+                      onChange={updateEndTime}
+                    >
+                      {selectedDayBookings.map((e, i) => (
+                        <option 
+                          key={i + 1} 
+                          value={i + 1} 
+                          disabled={disabledEndTimes[i]}
+                        >
+                          {i + 1}:00
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Give Description</label>
+                    <textarea 
+                      name="description" 
+                      disabled={true} 
+                      id="description" 
+                      className="form-control" 
+                      placeholder="Write Brief Description"
+                    />
+                  </div>
+
+                  <input 
+                    className="btn btn-block btn-primary btn-lg rounded border-0 z-3" 
+                    type="submit" 
+                    value="Create booking" 
+                  />
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
