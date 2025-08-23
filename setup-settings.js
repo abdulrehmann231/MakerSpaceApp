@@ -2,9 +2,28 @@
 // Run this once to initialize the availability settings
 
 import { MongoClient } from 'mongodb';
+import { config } from 'dotenv';
 
-const uri = process.env.MONGODB_URI || 'mongodb+srv://mabdulrehman951:VpCCsW7d4iercigb@makerspace.qsxdx7g.mongodb.net/';
-const dbName = process.env.MONGODB_DB || 'makerspace';
+// Load environment variables from .env file
+config();
+
+const uri = process.env.MONGODB_URI;
+const dbName = process.env.MONGODB_DB;
+
+// Validate environment variables
+if (!uri) {
+  console.log('💡 Please create a .env file with your MongoDB connection string');
+  console.log('📝 Example: MONGODB_URI=mongodb+srv://yourusername:yourpassword@yourcluster.mongodb.net/');
+  process.exit(1);
+}
+
+if (!dbName) {
+  console.log('💡 Please create a .env file with your database name');
+  console.log('📝 Example: MONGODB_DB=makerspace');
+  process.exit(1);
+}
+
+
 
 async function setupSettings() {
   const client = new MongoClient(uri);
