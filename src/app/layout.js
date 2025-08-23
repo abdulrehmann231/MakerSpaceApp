@@ -1,9 +1,7 @@
 import AppWrapper from '@/components/AppWrapper'
 import Sidebar from '@/components/Sidebar'
 import ThemeController from '@/components/ThemeController'
-import Header from '@/components/Header'
-import Footer from '@/components/Footer'
-import SearchBar from '@/components/SearchBar'
+import { Page, BookingModal } from '@/components'
 
 export const metadata = {
   title: "MakerSpace Delft",
@@ -26,12 +24,10 @@ export default function RootLayout({ children }) {
       <body className="color-theme-blue push-content-right theme-light">
         <AppWrapper>
           <Sidebar firstname="User" />
-          <div className="page">
-            <SearchBar />
-            <Header />
+          <Page>
             {children}
-            <Footer />
-          </div>
+          </Page>
+          <BookingModal />
           <ThemeController />
         </AppWrapper>
       </body>

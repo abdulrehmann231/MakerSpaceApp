@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { bookings, cancelBooking, accountInfo, formatDate } from '@/lib/api'
-import BookingModal from '@/components/BookingModal'
 
 export default function BookingsPage() {
   const [bookingsData, setBookingsData] = useState([])
@@ -102,9 +101,7 @@ export default function BookingsPage() {
   }
 
   return (
-    <div className="page-content">
-      <div className="content-sticky-footer">
-        <div>
+    <div>
           <div className="col-12 mt-3 mb-4">
             <p className="text-uppercase font-weight-bold text-primary">Welcome,</p>
             <h1>
@@ -145,10 +142,6 @@ export default function BookingsPage() {
             <div className="col">no bookings</div>
           )}
 
-          {/* Booking Modal */}
-          <BookingModal />
         </div>
-      </div>
-    </div>
   )
 }
