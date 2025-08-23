@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb';
 
-const uri = process.env.MONGODB_URI || 'mongodb+srv://username:password@cluster.mongodb.net/makerspace?retryWrites=true&w=majority';
-const dbName = process.env.MONGODB_DB || 'makerspace';
+const uri = process.env.MONGODB_URI 
+const dbName = process.env.MONGODB_DB 
 
 let client;
 let db;
