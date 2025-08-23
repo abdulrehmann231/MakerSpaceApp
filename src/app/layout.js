@@ -1,7 +1,5 @@
 import AppWrapper from '@/components/AppWrapper'
-import Sidebar from '@/components/Sidebar'
-import ThemeController from '@/components/ThemeController'
-import { Page, BookingModal } from '@/components'
+import ScriptLoader from '@/components/ScriptLoader'
 
 export const metadata = {
   title: "MakerSpace Delft",
@@ -19,12 +17,12 @@ export default function RootLayout({ children }) {
         <script src="/js/jquery-3.2.1.min.js"></script>
         <script src="/vendor/bootstrap-4.1.3/js/bootstrap.min.js"></script>
         <script src="/vendor/cookie/jquery.cookie.js"></script>
-        <script src="/js/main.js"></script>
       </head>
       <body className="color-theme-blue push-content-right theme-light">
         <AppWrapper>
           {children}
         </AppWrapper>
+        <ScriptLoader />
       </body>
     </html>
   );

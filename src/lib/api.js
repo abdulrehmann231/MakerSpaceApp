@@ -1,3 +1,14 @@
+// Helper function to handle 401 errors (like original readResponse)
+function handleResponse(response) {
+  if (response.status === 401) {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+    return false;
+  }
+  return response.json();
+}
+
 // API functions for Next.js backend
 export async function signin(email, password) {
   try {
@@ -10,7 +21,8 @@ export async function signin(email, password) {
       body: JSON.stringify({ email, password })
     });
 
-    const data = await response.json();
+    const data = await handleResponse(response);
+    if (data === false) return false; // 401 error handled
     return data.code === 'LOGIN' || data.code === 'PWCHANGE';
   } catch (error) {
     console.error('Signin error:', error);
@@ -45,7 +57,8 @@ export async function register(email, password, firstname, lastname) {
       body: JSON.stringify({ email, password, firstname, lastname })
     });
 
-    const data = await response.json();
+    const data = await handleResponse(response);
+    if (data === false) return false; // 401 error handled
     return data.code === 'REG';
   } catch (error) {
     console.error('Register error:', error);
@@ -63,7 +76,8 @@ export async function getAvailability(from, to) {
       credentials: 'include'
     });
 
-    const data = await response.json();
+    const data = await handleResponse(response);
+    if (data === false) return []; // 401 error handled
     return data.code === 'FOUND' ? data.msg : [];
   } catch (error) {
     console.error('Get availability error:', error);
@@ -84,7 +98,8 @@ export async function bookings() {
       credentials: 'include'
     });
 
-    const data = await response.json();
+    const data = await handleResponse(response);
+    if (data === false) return { code: 'ERROR', msg: [] }; // 401 error handled
     return data; // Return the full response object
   } catch (error) {
     console.error('Bookings error:', error);
@@ -103,7 +118,8 @@ export async function cancelBooking(id) {
       body: JSON.stringify({ id })
     });
 
-    const data = await response.json();
+    const data = await handleResponse(response);
+    if (data === false) return false; // 401 error handled
     return data.code === 'DELETE';
   } catch (error) {
     console.error('Cancel booking error:', error);
@@ -122,7 +138,8 @@ export async function registerBooking(date, start, end, people, description = ""
       body: JSON.stringify({ date, start, end, npeople: people, description })
     });
 
-    const data = await response.json();
+    const data = await handleResponse(response);
+    if (data === false) return false; // 401 error handled
     return data.code === 'BOOKED';
   } catch (error) {
     console.error('Register booking error:', error);
@@ -140,7 +157,8 @@ export async function accountInfo() {
       credentials: 'include'
     });
 
-    const data = await response.json();
+    const data = await handleResponse(response);
+    if (data === false) return { code: 'ERROR', msg: null }; // 401 error handled
     return data; // Return the full response object
   } catch (error) {
     console.error('Account info error:', error);
@@ -159,7 +177,8 @@ export async function setUserData(email, userData) {
       body: JSON.stringify({ email, userdata: userData, update: true })
     });
 
-    const data = await response.json();
+    const data = await handleResponse(response);
+    if (data === false) return false; // 401 error handled
     return data.code === 'UPDATE';
   } catch (error) {
     console.error('Set user data error:', error);

@@ -32,7 +32,9 @@ export default function LoginPage() {
           router.push('/bookings')
         } catch (routerError) {
           console.error('Router error:', routerError)
-          window.location.href = '/bookings'
+          if (typeof window !== 'undefined') {
+            window.location.href = '/bookings'
+          }
         }
       } else {
         alert('Login failed. Please check your credentials.')
