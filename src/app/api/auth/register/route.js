@@ -20,12 +20,21 @@ export async function POST(request) {
 
     // Handle the response
     if (result.statusCode === '302') {
-      const response = NextResponse.json(result.body, { status: 200 });
+      // Parse the body since it's already a JSON string from the original backend
+      const bodyData = JSON.parse(result.body);
+      const response = NextResponse.json(bodyData, { status: 200 });
       
       // Set cookies if registration was successful
       if (result.multiValueHeaders && result.multiValueHeaders['Set-Cookie']) {
         result.multiValueHeaders['Set-Cookie'].forEach(cookie => {
-          response.cookies.set(cookie.split('=')[0], cookie.split('=')[1].split(';')[0], {
+          // Parse cookie properly to handle URL encoding
+          const [nameValue, ...options] = cookie.split(';');
+          const [name, value] = nameValue.split('=');
+          
+          // Decode the value if it's URL encoded
+          const decodedValue = decodeURIComponent(value);
+          
+          response.cookies.set(name.trim(), decodedValue, {
             httpOnly: cookie.includes('HttpOnly'),
             secure: cookie.includes('Secure'),
             sameSite: 'lax'
@@ -35,7 +44,9 @@ export async function POST(request) {
       
       return response;
     } else {
-      return NextResponse.json(result.body, { status: parseInt(result.statusCode) });
+      // Parse the body for error responses too
+      const bodyData = JSON.parse(result.body);
+      return NextResponse.json(bodyData, { status: parseInt(result.statusCode) });
     }
   } catch (error) {
     console.error('Register error:', error);

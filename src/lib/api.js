@@ -11,7 +11,7 @@ export async function signin(email, password) {
     });
 
     const data = await response.json();
-    return data.code === 'LOGIN';
+    return data.code === 'LOGIN' || data.code === 'PWCHANGE';
   } catch (error) {
     console.error('Signin error:', error);
     return false;
@@ -44,39 +44,117 @@ export async function register(email, password, firstname, lastname) {
 }
 
 export async function getAvailability(from, to) {
-  console.log('Get availability called with:', from, to)
-  // TODO: Implement availability
-  return []
+  try {
+    const response = await fetch(`/api/bookings?from=${from}&to=${to}&see=true`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include'
+    });
+
+    const data = await response.json();
+    return data.code === 'FOUND' ? data.msg : [];
+  } catch (error) {
+    console.error('Get availability error:', error);
+    return [];
+  }
 }
 
 export async function bookings() {
-  console.log('Bookings called')
-  // TODO: Implement bookings
-  return []
+  try {
+    const from = new Date().toISOString().split('T')[0];
+    const to = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const response = await fetch(`/api/bookings?from=${from}&to=${to}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include'
+    });
+
+    const data = await response.json();
+    return data.code === 'FOUND' ? data.msg : [];
+  } catch (error) {
+    console.error('Bookings error:', error);
+    return [];
+  }
 }
 
 export async function cancelBooking(id) {
-  console.log('Cancel booking called with id:', id)
-  // TODO: Implement cancel booking
-  return false
+  try {
+    const response = await fetch('/api/bookings', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ id })
+    });
+
+    const data = await response.json();
+    return data.code === 'DELETE';
+  } catch (error) {
+    console.error('Cancel booking error:', error);
+    return false;
+  }
 }
 
 export async function registerBooking(date, start, end, people, description = "") {
-  console.log('Register booking called with:', date, start, end, people, description)
-  // TODO: Implement booking registration
-  return false
+  try {
+    const response = await fetch('/api/bookings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ date, start, end, npeople: people, description })
+    });
+
+    const data = await response.json();
+    return data.code === 'BOOKED';
+  } catch (error) {
+    console.error('Register booking error:', error);
+    return false;
+  }
 }
 
 export async function accountInfo() {
-  console.log('Account info called')
-  // TODO: Implement account info
-  return null
+  try {
+    const response = await fetch('/api/client', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include'
+    });
+
+    const data = await response.json();
+    return data.code === 'FOUND' ? data.msg : null;
+  } catch (error) {
+    console.error('Account info error:', error);
+    return null;
+  }
 }
 
 export async function setUserData(email, userData) {
-  console.log('Set user data called with:', email, userData)
-  // TODO: Implement set user data
-  return false
+  try {
+    const response = await fetch('/api/client', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email, userdata: userData, update: true })
+    });
+
+    const data = await response.json();
+    return data.code === 'UPDATE';
+  } catch (error) {
+    console.error('Set user data error:', error);
+    return false;
+  }
 }
 
 // Utility functions

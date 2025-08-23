@@ -10,8 +10,8 @@ export default function BookingModal() {
   const [disabledEndTimes, setDisabledEndTimes] = useState([])
   const [npeople, setNpeople] = useState(1)
   const [selectedDay, setSelectedDay] = useState(0)
-  const [selectedStart, setSelectedStart] = useState(null)
-  const [selectedEnd, setSelectedEnd] = useState(null)
+  const [selectedStart, setSelectedStart] = useState(0)
+  const [selectedEnd, setSelectedEnd] = useState(1)
 
   useEffect(() => {
     reload()
@@ -20,12 +20,19 @@ export default function BookingModal() {
   const reload = async () => {
     try {
       const data = await getAvailability(dateString(0), dateString(14))
-      if (data) {
+      if (data && data.msg) {
         const bookingsData = data.msg
         setAvailableBookings(bookingsData)
-        setSelectedStart(Object.keys(bookingsData[selectedDay])[0])
-        setSelectedEnd(Object.keys(bookingsData[selectedDay])[1])
-        updateMenus(bookingsData, selectedDay, Object.keys(bookingsData[selectedDay])[0], Object.keys(bookingsData[selectedDay])[1], npeople)
+        
+        // Safely get the first available day and times
+        const firstDay = Object.keys(bookingsData)[0] || 0
+        const firstDayData = bookingsData[firstDay] || {}
+        const firstStart = Object.keys(firstDayData)[0] || 0
+        const firstEnd = Object.keys(firstDayData)[1] || 1
+        
+        setSelectedStart(parseInt(firstStart))
+        setSelectedEnd(parseInt(firstEnd))
+        updateMenus(bookingsData, parseInt(firstDay), parseInt(firstStart), parseInt(firstEnd), npeople)
       }
     } catch (error) {
       console.error('Error loading availability:', error)
@@ -36,9 +43,9 @@ export default function BookingModal() {
     if (!bookings) return
 
     const selectedStartTime = Math.max(start || 0, 0)
-    const selectedEndTime = end || selectedEnd
-    const selectedPeople = people || npeople
-    const selectedDayValue = day || selectedDay
+    const selectedEndTime = end || selectedEnd || 1
+    const selectedPeople = people || npeople || 1
+    const selectedDayValue = day || selectedDay || 0
 
     const dayBookings = bookings[selectedDayValue] || []
 
@@ -98,19 +105,26 @@ export default function BookingModal() {
     e.preventDefault()
     try {
       await registerBooking(
-        dateString(parseInt(selectedDay)), 
-        selectedStart, 
-        selectedEnd, 
-        npeople
+        dateString(parseInt(selectedDay || 0)), 
+        selectedStart || 0, 
+        selectedEnd || 1, 
+        npeople || 1
       )
-      window.location.reload()
+      // Use router.push instead of window.location.reload() to prevent hydration issues
+      if (typeof window !== 'undefined') {
+        window.location.href = window.location.pathname
+      }
     } catch (error) {
       console.error('Error creating booking:', error)
     }
     
     // Hide modal using Bootstrap
     if (typeof window !== 'undefined' && window.$) {
-      window.$('#hireme').modal('hide')
+      try {
+        window.$('#hireme').modal('hide')
+      } catch (error) {
+        console.error('Error hiding modal:', error)
+      }
     }
   }
 
@@ -138,7 +152,7 @@ export default function BookingModal() {
                       className="form-control" 
                       id="people" 
                       name="people" 
-                      value={npeople} 
+                      value={npeople || 1} 
                       onChange={updatePeople}
                     >
                       {Array.from(Array(5), (e, i) => (
@@ -151,17 +165,21 @@ export default function BookingModal() {
                     <label>Date:</label>
                     <select 
                       className="form-control" 
-                      value={selectedDay} 
+                      value={selectedDay || 0} 
                       onChange={updateDay}
                     >
                       {(availableBookings || []).map((e, i) => {
                         let dateName = ""
-                        if (i === 0) {
-                          dateName = "Today"
-                        } else if (i === 1) {
-                          dateName = "Tomorrow"
-                        } else {
-                          dateName = formatDate(new Date(Date.now() + 24 * 60 * 60 * 1000 * parseInt(i)))
+                        try {
+                          if (i === 0) {
+                            dateName = "Today"
+                          } else if (i === 1) {
+                            dateName = "Tomorrow"
+                          } else {
+                            dateName = formatDate(new Date(Date.now() + 24 * 60 * 60 * 1000 * parseInt(i)))
+                          }
+                        } catch (error) {
+                          dateName = `Day ${i}`
                         }
                         return <option key={i} value={i}>{dateName}</option>
                       })}
@@ -172,7 +190,7 @@ export default function BookingModal() {
                     <label>Starting from:</label>
                     <select 
                       className="form-control" 
-                      value={selectedStart} 
+                      value={selectedStart || 0} 
                       onChange={updateStartTime} 
                       disabled={!disabledStartTimes.includes(false)}
                     >
@@ -192,7 +210,7 @@ export default function BookingModal() {
                     <label>Until:</label>
                     <select 
                       className="form-control" 
-                      value={selectedEnd} 
+                      value={selectedEnd || 1} 
                       onChange={updateEndTime}
                     >
                       {selectedDayBookings.map((e, i) => (
