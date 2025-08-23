@@ -20,19 +20,30 @@ export default function BookingModal() {
   const reload = async () => {
     try {
       const data = await getAvailability(dateString(0), dateString(14))
-      if (data && data.msg) {
-        const bookingsData = data.msg
-        setAvailableBookings(bookingsData)
+      
+      if (data  ) {
+        const bookingsData = data
+        
+        // Convert array format to object format (like original code expects)
+        const convertedBookingsData = {}
+        bookingsData.forEach((dayArray, dayIndex) => {
+          convertedBookingsData[dayIndex] = {}
+          dayArray.forEach((spots, hourIndex) => {
+            convertedBookingsData[dayIndex][hourIndex] = spots
+          })
+        })
+        console.log(convertedBookingsData)
+        setAvailableBookings(convertedBookingsData)
         
         // Safely get the first available day and times
-        const firstDay = Object.keys(bookingsData)[0] || 0
-        const firstDayData = bookingsData[firstDay] || {}
+        const firstDay = Object.keys(convertedBookingsData)[0] || 0
+        const firstDayData = convertedBookingsData[firstDay] || {}
         const firstStart = Object.keys(firstDayData)[0] || 0
         const firstEnd = Object.keys(firstDayData)[1] || 1
         
         setSelectedStart(parseInt(firstStart))
         setSelectedEnd(parseInt(firstEnd))
-        updateMenus(bookingsData, parseInt(firstDay), parseInt(firstStart), parseInt(firstEnd), npeople)
+        updateMenus(convertedBookingsData, parseInt(firstDay), parseInt(firstStart), parseInt(firstEnd), npeople)
       }
     } catch (error) {
       console.error('Error loading availability:', error)
@@ -47,12 +58,18 @@ export default function BookingModal() {
     const selectedPeople = people || npeople || 1
     const selectedDayValue = day || selectedDay || 0
 
-    const dayBookings = bookings[selectedDayValue] || []
+    const dayBookings = bookings[selectedDayValue] || {}
+    
+    // Convert object to array for easier processing
+    const dayBookingsArray = []
+    for (let i = 0; i < 24; i++) {
+      dayBookingsArray[i] = dayBookings[i] || 0
+    }
 
     const date = new Date()
     const time = parseInt(date.toLocaleString('en-GB', { hour: '2-digit', timeZone: 'Europe/Athens' }))
     
-    const newDisabledStartTimes = dayBookings.map((e, i) => {
+    const newDisabledStartTimes = dayBookingsArray.map((e, i) => {
       return selectedPeople > parseInt(e) || (selectedDayValue == 0 && i < time + 2)
     })
 
@@ -61,12 +78,12 @@ export default function BookingModal() {
       newSelectedStart = newDisabledStartTimes.findIndex((a) => a === false)
     }
 
-    const newDisabledEndTimes = dayBookings.map((e, i) => {
+    const newDisabledEndTimes = dayBookingsArray.map((e, i) => {
       const j = i + 1
       let disabled = false
       if (newSelectedStart >= j) disabled = true
       for (let k = newSelectedStart; k < j; k++) {
-        if (selectedPeople > parseInt(dayBookings[k])) disabled = true
+        if (selectedPeople > parseInt(dayBookingsArray[k])) disabled = true
       }
       return disabled
     })
@@ -76,7 +93,7 @@ export default function BookingModal() {
       newSelectedEnd = newDisabledEndTimes.findIndex((a) => a === false) + 1
     }
 
-    setSelectedDayBookings(dayBookings)
+    setSelectedDayBookings(dayBookingsArray)
     setDisabledStartTimes(newDisabledStartTimes)
     setDisabledEndTimes(newDisabledEndTimes)
     setSelectedStart(newSelectedStart)
@@ -145,7 +162,7 @@ export default function BookingModal() {
           <div className="modal-body">
             <div className="row">
               <div className="col mt-3">
-                <form onSubmit={handleSubmit} name="booking">
+                <form onSubmit={handleSubmit} name="login">
                   <div className="form-group">
                     <label>Number of people:</label>
                     <select 
@@ -168,9 +185,12 @@ export default function BookingModal() {
                       value={selectedDay || 0} 
                       onChange={updateDay}
                     >
-                      {(availableBookings || []).map((e, i) => {
+                      { 
+                      
+                      (availableBookings? Object.keys(availableBookings) : []).map((e, i) => {
                         let dateName = ""
                         try {
+                          console.log(availableBookings)
                           if (i === 0) {
                             dateName = "Today"
                           } else if (i === 1) {
@@ -179,6 +199,7 @@ export default function BookingModal() {
                             dateName = formatDate(new Date(Date.now() + 24 * 60 * 60 * 1000 * parseInt(i)))
                           }
                         } catch (error) {
+                          console.error('Error formatting date:', error)
                           dateName = `Day ${i}`
                         }
                         return <option key={i} value={i}>{dateName}</option>

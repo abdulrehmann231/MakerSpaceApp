@@ -75,10 +75,11 @@ export async function bookings() {
     });
 
     const data = await response.json();
-    return data.code === 'FOUND' ? data.msg : [];
+    console.log('Bookings API raw response:', data);
+    return data; // Return the full response object
   } catch (error) {
     console.error('Bookings error:', error);
-    return [];
+    return { code: 'ERROR', msg: [] };
   }
 }
 
@@ -131,10 +132,11 @@ export async function accountInfo() {
     });
 
     const data = await response.json();
-    return data.code === 'FOUND' ? data.msg : null;
+    console.log('Account info API raw response:', data);
+    return data; // Return the full response object
   } catch (error) {
     console.error('Account info error:', error);
-    return null;
+    return { code: 'ERROR', msg: null };
   }
 }
 
