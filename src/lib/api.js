@@ -1,56 +1,189 @@
-// Placeholder API functions - to be implemented later
+// Helper function to handle 401 errors (like original readResponse)
+function handleResponse(response) {
+  if (response.status === 401) {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+    return false;
+  }
+  return response.json();
+}
+
+// API functions for Next.js backend
 export async function signin(email, password) {
-  console.log('Signin called with:', email, password)
-  // TODO: Implement authentication
-  return false
+  try {
+    const response = await fetch('/api/auth/signin', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await handleResponse(response);
+    if (data === false) return false; // 401 error handled
+    return data.code === 'LOGIN' || data.code === 'PWCHANGE';
+  } catch (error) {
+    console.error('Signin error:', error);
+    return false;
+  }
 }
 
 export async function signout() {
-  console.log('Signout called')
-  // TODO: Implement signout
-  return true
+  try {
+    // Call the signout API to clear HttpOnly cookies server-side
+    const response = await fetch('/api/auth/signout', {
+      method: 'POST',
+      credentials: 'include'
+    });
+    
+
+    return true;
+  } catch (error) {
+    console.error('Signout error:', error);
+    return false;
+  }
 }
 
 export async function register(email, password, firstname, lastname) {
-  console.log('Register called with:', email, firstname, lastname)
-  // TODO: Implement registration
-  return false
+  try {
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email, password, firstname, lastname })
+    });
+
+    const data = await handleResponse(response);
+    if (data === false) return false; // 401 error handled
+    return data.code === 'REG';
+  } catch (error) {
+    console.error('Register error:', error);
+    return false;
+  }
 }
 
 export async function getAvailability(from, to) {
-  console.log('Get availability called with:', from, to)
-  // TODO: Implement availability
-  return []
+  try {
+    const response = await fetch(`/api/bookings?from=${from}&to=${to}&see=true`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include'
+    });
+
+    const data = await handleResponse(response);
+    if (data === false) return []; // 401 error handled
+    return data.code === 'FOUND' ? data.msg : [];
+  } catch (error) {
+    console.error('Get availability error:', error);
+    return [];
+  }
 }
 
 export async function bookings() {
-  console.log('Bookings called')
-  // TODO: Implement bookings
-  return []
+  try {
+    const from = new Date().toISOString().split('T')[0];
+    const to = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const response = await fetch(`/api/bookings?from=${from}&to=${to}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include'
+    });
+
+    const data = await handleResponse(response);
+    if (data === false) return { code: 'ERROR', msg: [] }; // 401 error handled
+    return data; // Return the full response object
+  } catch (error) {
+    console.error('Bookings error:', error);
+    return { code: 'ERROR', msg: [] };
+  }
 }
 
 export async function cancelBooking(id) {
-  console.log('Cancel booking called with id:', id)
-  // TODO: Implement cancel booking
-  return false
+  try {
+    const response = await fetch('/api/bookings', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ id })
+    });
+
+    const data = await handleResponse(response);
+    if (data === false) return false; // 401 error handled
+    return data.code === 'DELETE';
+  } catch (error) {
+    console.error('Cancel booking error:', error);
+    return false;
+  }
 }
 
 export async function registerBooking(date, start, end, people, description = "") {
-  console.log('Register booking called with:', date, start, end, people, description)
-  // TODO: Implement booking registration
-  return false
+  try {
+    const response = await fetch('/api/bookings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ date, start, end, npeople: people, description })
+    });
+
+    const data = await handleResponse(response);
+    if (data === false) return false; // 401 error handled
+    return data.code === 'BOOKED';
+  } catch (error) {
+    console.error('Register booking error:', error);
+    return false;
+  }
 }
 
 export async function accountInfo() {
-  console.log('Account info called')
-  // TODO: Implement account info
-  return null
+  try {
+    const response = await fetch('/api/client', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include'
+    });
+
+    const data = await handleResponse(response);
+    if (data === false) return { code: 'ERROR', msg: null }; // 401 error handled
+    return data; // Return the full response object
+  } catch (error) {
+    console.error('Account info error:', error);
+    return { code: 'ERROR', msg: null };
+  }
 }
 
 export async function setUserData(email, userData) {
-  console.log('Set user data called with:', email, userData)
-  // TODO: Implement set user data
-  return false
+  try {
+    const response = await fetch('/api/client', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email, userdata: userData, update: true })
+    });
+
+    const data = await handleResponse(response);
+    if (data === false) return false; // 401 error handled
+    return data.code === 'UPDATE';
+  } catch (error) {
+    console.error('Set user data error:', error);
+    return false;
+  }
 }
 
 // Utility functions

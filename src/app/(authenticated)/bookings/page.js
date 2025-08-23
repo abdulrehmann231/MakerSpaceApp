@@ -114,7 +114,7 @@ export default function BookingsPage() {
           <div className="row mx-0 mt-3">
             <div className="col">
               <a 
-                href="javascript:void(0)" 
+                 
                 className="btn btn-block btn-primary rounded border-0" 
                 data-toggle="modal" 
                 data-target="#hireme"

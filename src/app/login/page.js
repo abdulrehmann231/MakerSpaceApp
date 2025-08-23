@@ -28,7 +28,16 @@ export default function LoginPage() {
     try {
       const result = await signin(formData.username, formData.password)
       if (result) {
-        router.push('/bookings')
+        try {
+          router.push('/bookings')
+        } catch (routerError) {
+          console.error('Router error:', routerError)
+          if (typeof window !== 'undefined') {
+            window.location.href = '/bookings'
+          }
+        }
+      } else {
+        alert('Login failed. Please check your credentials.')
       }
     } catch (error) {
       console.error('Login failed:', error)
