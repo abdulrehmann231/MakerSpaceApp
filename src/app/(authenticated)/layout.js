@@ -11,8 +11,8 @@ export default function AuthenticatedLayout({ children }) {
 
   useEffect(() => {
     accountInfo().then((data) => {
-      if (data && data.firstname) {
-        setFirstname(data.firstname)
+      if (data ) {
+        setFirstname(data.msg.firstname)
       }
     })
   }, [])

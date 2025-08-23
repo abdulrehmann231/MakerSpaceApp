@@ -32,7 +32,7 @@ export default function BookingModal() {
             convertedBookingsData[dayIndex][hourIndex] = spots
           })
         })
-        console.log(convertedBookingsData)
+        
         setAvailableBookings(convertedBookingsData)
         
         // Safely get the first available day and times
@@ -190,7 +190,7 @@ export default function BookingModal() {
                       (availableBookings? Object.keys(availableBookings) : []).map((e, i) => {
                         let dateName = ""
                         try {
-                          console.log(availableBookings)
+                          
                           if (i === 0) {
                             dateName = "Today"
                           } else if (i === 1) {

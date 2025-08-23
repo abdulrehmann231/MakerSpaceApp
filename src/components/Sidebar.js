@@ -9,7 +9,7 @@ export default function Sidebar({ firstname = "User" }) {
   return (
     <div className="sidebar sidebar-left">
       <div className="profile-link">
-        <a href="#account" className="media" style={{ display: "true" }}>
+        <a href="/account" className="media" style={{ display: "true" }}>
           <div className="w-auto h-100">
             <figure className="avatar avatar-40">
               <img src="/img/user1.png" alt="" />
@@ -41,7 +41,7 @@ export default function Sidebar({ firstname = "User" }) {
               className={`sidebar-close ${pathname === '/bookings' ? 'active' : ''}`}
             >
               <div className="item-title">
-                <i className="material-icons">menu</i>Bookings
+                <i className="material-icons ">menu</i>Bookings
               </div>
             </Link>
           </li>

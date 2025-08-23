@@ -5,7 +5,7 @@ export default function Header() {
     <header className="row m-0 fixed-header">
       <div className="left">
         <a  className="menu-left">
-          <i className="material-icons">menu</i>
+          <i className="material-icons text-white">menu</i>
         </a>
       </div>
       <div className="col center">
@@ -15,7 +15,7 @@ export default function Header() {
       </div>
       <div className="right">
         <a  className="searchbtn">
-          <i className="material-icons">search</i>
+          <i className="material-icons text-white">search</i>
         </a>
       </div>
     </header>

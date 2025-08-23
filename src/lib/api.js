@@ -75,7 +75,6 @@ export async function bookings() {
     });
 
     const data = await response.json();
-    console.log('Bookings API raw response:', data);
     return data; // Return the full response object
   } catch (error) {
     console.error('Bookings error:', error);
@@ -132,7 +131,6 @@ export async function accountInfo() {
     });
 
     const data = await response.json();
-    console.log('Account info API raw response:', data);
     return data; // Return the full response object
   } catch (error) {
     console.error('Account info error:', error);
