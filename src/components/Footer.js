@@ -1,5 +1,7 @@
 'use client'
 
+import Link from "next/link"
+
 export default function Footer() {
   return (
     <div className="footer-wrapper shadow-15">
@@ -9,10 +11,10 @@ export default function Footer() {
             Overux
           </div>
           <div className="col-7 text-right">
-            <a href="/" className="social"><img src="/img/facebook.png" alt="" /></a>
-            <a href="/" className="social"><img src="/img/googleplus.png" alt="" /></a>
-            <a href="/" className="social"><img src="/img/linkedin.png" alt="" /></a>
-            <a href="/" className="social"><img src="/img/twitter.png" alt="" /></a>
+            <Link href="/" className="social"><img src="/img/facebook.png" alt="" /></Link>
+            <Link href="/" className="social"><img src="/img/googleplus.png" alt="" /></Link>
+            <Link href="/" className="social"><img src="/img/linkedin.png" alt="" /></Link>
+            <Link href="/" className="social"><img src="/img/twitter.png" alt="" /></Link>
           </div>
         </div>
       </div>

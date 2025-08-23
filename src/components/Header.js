@@ -1,5 +1,7 @@
 'use client'
 
+import Link from "next/link"
+
 export default function Header() {
   return (
     <header className="row m-0 fixed-header">
@@ -9,9 +11,9 @@ export default function Header() {
         </a>
       </div>
       <div className="col center">
-        <a href="/" className="logo">
+        <Link href="/" className="logo">
           <figure><img src="/img/logo-w.png" alt="" /></figure> My Bookings
-        </a>
+        </Link>
       </div>
       <div className="right">
         <a  className="searchbtn">
