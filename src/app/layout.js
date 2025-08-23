@@ -23,12 +23,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="color-theme-blue push-content-right theme-light">
         <AppWrapper>
-          <Sidebar firstname="User" />
-          <Page>
-            {children}
-          </Page>
-          <BookingModal />
-          <ThemeController />
+          {children}
         </AppWrapper>
       </body>
     </html>

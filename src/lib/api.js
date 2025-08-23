@@ -1,8 +1,21 @@
-// Placeholder API functions - to be implemented later
+// API functions for Next.js backend
 export async function signin(email, password) {
-  console.log('Signin called with:', email, password)
-  // TODO: Implement authentication
-  return false
+  try {
+    const response = await fetch('/api/auth/signin', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await response.json();
+    return data.code === 'LOGIN';
+  } catch (error) {
+    console.error('Signin error:', error);
+    return false;
+  }
 }
 
 export async function signout() {
@@ -12,9 +25,22 @@ export async function signout() {
 }
 
 export async function register(email, password, firstname, lastname) {
-  console.log('Register called with:', email, firstname, lastname)
-  // TODO: Implement registration
-  return false
+  try {
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email, password, firstname, lastname })
+    });
+
+    const data = await response.json();
+    return data.code === 'REG';
+  } catch (error) {
+    console.error('Register error:', error);
+    return false;
+  }
 }
 
 export async function getAvailability(from, to) {
