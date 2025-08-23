@@ -1,3 +1,10 @@
+import AppWrapper from '@/components/AppWrapper'
+import Sidebar from '@/components/Sidebar'
+import ThemeController from '@/components/ThemeController'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
+import SearchBar from '@/components/SearchBar'
+
 export const metadata = {
   title: "MakerSpace Delft",
   description: "A platform for managing makerspace resources and bookings",
@@ -17,7 +24,16 @@ export default function RootLayout({ children }) {
         <script src="/js/main.js"></script>
       </head>
       <body className="color-theme-blue push-content-right theme-light">
-        {children}
+        <AppWrapper>
+          <Sidebar firstname="User" />
+          <div className="page">
+            <SearchBar />
+            <Header />
+            {children}
+            <Footer />
+          </div>
+          <ThemeController />
+        </AppWrapper>
       </body>
     </html>
   );
