@@ -2,11 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useRef } from 'react'
 import { signout } from '@/lib/api'
 
 export default function Sidebar({ firstname = "User" }) {
   const pathname = usePathname()
   const router = useRouter()
+  const sidebarRef = useRef(null)
 
   const handleLogout = async (e) => {
     e.preventDefault()
@@ -14,8 +16,43 @@ export default function Sidebar({ firstname = "User" }) {
     router.push('/login')
   }
 
+  // Handle click outside sidebar
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      console.log(event.target);
+      console.log(event.target.closest('.sidebar-close'));
+      console.log("sidebar close")
+      // Check if sidebar is open
+      console.log(document.body.classList);
+      if (document.body.classList.contains('menu-left-open')) {
+        // Check if click is outside sidebar and on backdrop
+        console.log(event.target.classList);
+        console.log(event);
+        const classes = ["sidebar" , "profile-link" , "navbar" , "nav-item" , "item-title" , "material-icons" , "btn" , "btn-link" , "btn-block"]
+
+        if (!classes.some(className => event.target.classList.contains(className))) {
+          console.log('Click outside sidebar detected');
+          document.body.classList.remove('menu-left-open');
+          const backdrop = document.querySelector('.backdrop');
+          if (backdrop) {
+            backdrop.style.opacity = '0';
+            setTimeout(() => backdrop.remove(), 300);
+          }
+        }
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('click', handleClickOutside);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
+
   return (
-    <div className="sidebar sidebar-left">
+    <div className="sidebar sidebar-left" ref={sidebarRef}>
       <div className="profile-link">
         <a href="/account" className="media" style={{ display: "true" }}>
           <div className="w-auto h-100">
