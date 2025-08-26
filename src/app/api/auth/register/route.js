@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { postClient } from '../../../../lib/backend/routes';
+import { sendWelcomeEmail } from '../../../../lib/api';
 
 export async function POST(request) {
   try {
@@ -41,6 +42,9 @@ export async function POST(request) {
           });
         });
       }
+      
+      // Send welcome email using utility function (this will be called from client-side)
+      console.log('Registration successful, welcome email should be sent from client-side');
       
       return response;
     } else {

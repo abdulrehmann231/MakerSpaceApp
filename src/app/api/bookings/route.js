@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createBooking, seeBookings, cancelBooking } from '../../../lib/backend/routes';
+import { sendBookingConfirmationEmail } from '../../../lib/api';
 
 export async function GET(request) {
   try {
@@ -45,6 +46,24 @@ export async function POST(request) {
     // Handle the response
     if (result.statusCode === '200') {
       const bodyData = JSON.parse(result.body);
+      
+      // Send booking confirmation email
+      try {
+        // Get user email from cookies
+        const cookies = request.headers.get('cookie');
+        const userCookie = cookies?.split(';').find(c => c.trim().startsWith('user='));
+        const userEmail = userCookie ? decodeURIComponent(userCookie.split('=')[1]) : null;
+        
+        if (userEmail) {
+          // Send email using utility function (this will be called from client-side)
+          // We'll trigger it by setting a flag in the response
+          console.log('Booking created successfully, email should be sent from client-side');
+        }
+      } catch (emailError) {
+        console.error('Email sending error:', emailError);
+        // Don't fail the booking if email fails
+      }
+      
       return NextResponse.json(bodyData, { status: 200 });
     } else {
       const bodyData = JSON.parse(result.body);

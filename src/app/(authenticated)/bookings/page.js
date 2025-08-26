@@ -1,47 +1,39 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { bookings, cancelBooking, accountInfo, formatDate } from '@/lib/api'
+import { bookings, cancelBooking } from '@/lib/api'
+import { accountInfo } from '@/lib/api'
+import { formatDate } from '@/lib/api'
 
 export default function BookingsPage() {
   const [bookingsData, setBookingsData] = useState([])
-  const [firstname, setFirstname] = useState("")
+  const [firstname, setFirstname] = useState("User")
 
   useEffect(() => {
-    // Load bookings data
-    const loadBookings = async () => {
-      try {
-        const data = await bookings()
-        if (data && data.code === "FOUND") {
-          setBookingsData(data.msg || [])
-        } else {
-          setBookingsData([])
-        }
-      } catch (error) {
-        console.error('Error loading bookings:', error)
-        setBookingsData([])
-      }
-    }
-
-    // Load account info
-    const loadAccountInfo = async () => {
-      try {
-        const data = await accountInfo()
-        if (data && data.msg) {
-          setFirstname(data.msg.firstname || "")
-        }
-      } catch (error) {
-        console.error('Error loading account info:', error)
-      }
-    }
-
-    loadBookings()
-    loadAccountInfo()
+    loadData()
   }, [])
+
+  const loadData = async () => {
+    try {
+      // Load account info
+      const accountData = await accountInfo()
+      if (accountData && accountData.code === 'FOUND' && accountData.msg && accountData.msg.firstname) {
+        setFirstname(accountData.msg.firstname)
+      }
+
+      // Load bookings
+      const data = await bookings()
+      if (data && data.code === "FOUND") {
+        setBookingsData(data.msg || [])
+      }
+    } catch (error) {
+      console.error('Error loading data:', error)
+    }
+  }
 
   const handleCancelBooking = async (e) => {
     e.preventDefault()
-    const bookingId = parseInt(e.target.dataset.id)
+    const bookingId = e.target.getAttribute('data-id')
     
     try {
       await cancelBooking(bookingId)
@@ -59,6 +51,11 @@ export default function BookingsPage() {
     } catch (error) {
       console.error('Error cancelling booking:', error)
     }
+  }
+
+  const openBookingModal = () => {
+    // Dispatch custom event to open modal
+    window.dispatchEvent(new Event('openBookingModal'))
   }
 
   const printBooking = (booking, filter) => {
@@ -113,14 +110,12 @@ export default function BookingsPage() {
           
           <div className="row mx-0 mt-3">
             <div className="col">
-              <a 
-                 
+              <button 
                 className="btn btn-block btn-primary rounded border-0" 
-                data-toggle="modal" 
-                data-target="#hireme"
+                onClick={openBookingModal}
               >
                 New booking
-              </a>
+              </button>
             </div>
           </div>
           

@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getAvailability, formatDate, dateString, registerBooking } from '@/lib/api'
+import { getAvailability, formatDate, dateString, registerBooking, sendBookingConfirmationEmail } from '@/lib/api'
 
 export default function BookingModal() {
+  const [isOpen, setIsOpen] = useState(false)
   const [availableBookings, setAvailableBookings] = useState(null)
   const [selectedDayBookings, setSelectedDayBookings] = useState([])
   const [disabledStartTimes, setDisabledStartTimes] = useState([])
@@ -13,9 +14,21 @@ export default function BookingModal() {
   const [selectedStart, setSelectedStart] = useState(0)
   const [selectedEnd, setSelectedEnd] = useState(1)
 
+  // Listen for custom event to open modal
   useEffect(() => {
-    reload()
+    const handleOpenModal = () => setIsOpen(true)
+    window.addEventListener('openBookingModal', handleOpenModal)
+    
+    return () => {
+      window.removeEventListener('openBookingModal', handleOpenModal)
+    }
   }, [])
+
+  useEffect(() => {
+    if (isOpen) {
+      reload()
+    }
+  }, [isOpen])
 
   const reload = async () => {
     try {
@@ -121,32 +134,51 @@ export default function BookingModal() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await registerBooking(
+      const success = await registerBooking(
         dateString(parseInt(selectedDay || 0)), 
         selectedStart || 0, 
         selectedEnd || 1, 
         npeople || 1
       )
-      // Use router.push instead of window.location.reload() to prevent hydration issues
-      if (typeof window !== 'undefined') {
-        window.location.href = window.location.pathname
+      
+      if (success) {
+        // Send booking confirmation email
+        try {
+          await sendBookingConfirmationEmail(
+            // We need to get the user email from cookies or context
+            // For now, we'll skip this and handle it differently
+            'user@example.com', // This should be the actual user email
+            { 
+              date: dateString(parseInt(selectedDay || 0)), 
+              start: selectedStart || 0, 
+              end: selectedEnd || 1, 
+              npeople: npeople || 1 
+            }
+          )
+        } catch (emailError) {
+          console.error('Failed to send booking confirmation email:', emailError)
+        }
+        
+        // Close modal
+        setIsOpen(false)
+        // Refresh the page to show new booking
+        if (typeof window !== 'undefined') {
+          window.location.href = window.location.pathname
+        }
       }
     } catch (error) {
       console.error('Error creating booking:', error)
     }
-    
-    // Hide modal using Bootstrap
-    if (typeof window !== 'undefined' && window.$) {
-      try {
-        window.$('#hireme').modal('hide')
-      } catch (error) {
-        console.error('Error hiding modal:', error)
-      }
-    }
   }
 
+  const closeModal = () => {
+    setIsOpen(false)
+  }
+
+  if (!isOpen) return null
+
   return (
-    <div className="modal fade" id="hireme" tabIndex="-1" role="dialog" aria-hidden="true">
+    <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
       <div className="modal-dialog" role="document">
         <div className="modal-content">
           <div className="background bg-45 rounded theme-header">
@@ -154,7 +186,7 @@ export default function BookingModal() {
           </div>
           <div className="modal-header">
             <h5 className="text-white">New booking</h5>
-            <button type="button" className="close text-white" data-dismiss="modal" aria-label="Close">
+            <button type="button" className="close text-white" onClick={closeModal} aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>

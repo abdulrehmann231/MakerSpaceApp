@@ -9,6 +9,55 @@ function handleResponse(response) {
   return response.json();
 }
 
+// Email utility functions
+export async function sendBookingConfirmationEmail(userEmail, bookingDetails) {
+  try {
+    const response = await fetch('/api/email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        type: 'booking-confirmation',
+        userEmail,
+        bookingDetails
+      })
+    });
+
+    const data = await handleResponse(response);
+    if (data === false) return false; // 401 error handled
+    return data.message === 'Email sent successfully';
+  } catch (error) {
+    console.error('Send booking confirmation email error:', error);
+    return false;
+  }
+}
+
+export async function sendWelcomeEmail(userEmail, firstName) {
+  try {
+    const response = await fetch('/api/email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        type: 'welcome',
+        userEmail,
+        firstName
+      })
+    });
+
+    const data = await handleResponse(response);
+    if (data === false) return false; // 401 error handled
+    return data.message === 'Email sent successfully';
+  } catch (error) {
+    console.error('Send welcome email error:', error);
+    return false;
+  }
+}
+
 // API functions for Next.js backend
 export async function signin(email, password) {
   try {
@@ -100,10 +149,30 @@ export async function bookings() {
 
     const data = await handleResponse(response);
     if (data === false) return { code: 'ERROR', msg: [] }; // 401 error handled
-    return data; // Return the full response object
+    return data;
   } catch (error) {
-    console.error('Bookings error:', error);
+    console.error('Get bookings error:', error);
     return { code: 'ERROR', msg: [] };
+  }
+}
+
+export async function registerBooking(date, start, end, npeople) {
+  try {
+    const response = await fetch('/api/bookings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ date, start, end, npeople })
+    });
+
+    const data = await handleResponse(response);
+    if (data === false) return false; // 401 error handled
+    return data.code === 'BOOKED';
+  } catch (error) {
+    console.error('Register booking error:', error);
+    return false;
   }
 }
 
@@ -127,26 +196,6 @@ export async function cancelBooking(id) {
   }
 }
 
-export async function registerBooking(date, start, end, people, description = "") {
-  try {
-    const response = await fetch('/api/bookings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ date, start, end, npeople: people, description })
-    });
-
-    const data = await handleResponse(response);
-    if (data === false) return false; // 401 error handled
-    return data.code === 'BOOKED';
-  } catch (error) {
-    console.error('Register booking error:', error);
-    return false;
-  }
-}
-
 export async function accountInfo() {
   try {
     const response = await fetch('/api/client', {
@@ -159,9 +208,9 @@ export async function accountInfo() {
 
     const data = await handleResponse(response);
     if (data === false) return { code: 'ERROR', msg: null }; // 401 error handled
-    return data; // Return the full response object
+    return data;
   } catch (error) {
-    console.error('Account info error:', error);
+    console.error('Get account info error:', error);
     return { code: 'ERROR', msg: null };
   }
 }
@@ -179,33 +228,25 @@ export async function setUserData(email, userData) {
 
     const data = await handleResponse(response);
     if (data === false) return false; // 401 error handled
-    return data.code === 'UPDATE';
+    return data.code === 'UPDATED';
   } catch (error) {
     console.error('Set user data error:', error);
     return false;
   }
 }
 
-// Utility functions
-export function dateString(n) {
-  const d = new Date()
-  d.setDate(d.getDate() + n)
-  return d.toISOString().replace(/T.*/, '')
+// Date utility functions
+export function dateString(daysFromNow) {
+  const date = new Date();
+  date.setDate(date.getDate() + daysFromNow);
+  return date.toISOString().split('T')[0];
 }
 
-export function dateId(n) {
-  const d = new Date()
-  d.setDate(d.getDate() + n)
-  return d.valueOf() - (new Date(2020, 1, 1)).valueOf()
-}
-
-export function formatDate(d) {
-  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-  return days[d.getDay()] + ", " + months[d.getMonth()] + " " + d.getDate()
-}
-
-export function formatDateId(dateId) {
-  const d = new Date(parseInt(dateId) + (new Date(2020, 1, 1)).valueOf())
-  return formatDate(d)
+export function formatDate(date) {
+  return date.toLocaleDateString('en-GB', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 }
