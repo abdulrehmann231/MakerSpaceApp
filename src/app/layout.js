@@ -22,25 +22,21 @@ export default function RootLayout({ children }) {
         <Script 
           src="/js/jquery-3.2.1.min.js" 
           strategy="beforeInteractive"
-          
         />
         
         <Script 
           src="/vendor/cookie/jquery.cookie.js" 
           strategy="beforeInteractive"
-          
         />
         
         <Script 
           src="/vendor/bootstrap-4.1.3/js/bootstrap.min.js" 
           strategy="afterInteractive"
-          
         />
         
         <Script 
           src="/js/main.js" 
           strategy="afterInteractive"
-          
         />
       </body>
     </html>
