@@ -9,6 +9,55 @@ function handleResponse(response) {
   return response.json();
 }
 
+// Email utility functions using Nodemailer
+export async function sendBookingConfirmationEmail(userEmail, bookingDetails) {
+  try {
+    const response = await fetch('/api/email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        type: 'booking-confirmation',
+        userEmail,
+        bookingDetails
+      })
+    });
+
+    const data = await handleResponse(response);
+    if (data === false) return false; // 401 error handled
+    return data.success === true;
+  } catch (error) {
+    console.error('Send booking confirmation email error:', error);
+    return false;
+  }
+}
+
+export async function sendWelcomeEmail(userEmail, firstName) {
+  try {
+    const response = await fetch('/api/email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        type: 'welcome',
+        userEmail,
+        firstName
+      })
+    });
+
+    const data = await handleResponse(response);
+    if (data === false) return false; // 401 error handled
+    return data.success === true;
+  } catch (error) {
+    console.error('Send welcome email error:', error);
+    return false;
+  }
+}
+
 // API functions for Next.js backend
 export async function signin(email, password) {
   try {

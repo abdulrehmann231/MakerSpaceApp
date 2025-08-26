@@ -19,6 +19,10 @@ export default function RootLayout({ children }) {
       <body className="color-theme-blue push-content-right theme-light">
         {children}
         <ThemeController />
+        
+        {/* JavaScript Files */}
+        <Script src="/js/jquery-3.2.1.min.js" />
+        <Script src="/vendor/bootstrap-4.1.3/js/bootstrap.min.js" />
       </body>
     </html>
   );

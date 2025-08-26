@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getAvailability, formatDate, dateString, registerBooking } from '@/lib/api'
+import { getAvailability, formatDate, dateString, registerBooking, sendBookingConfirmationEmail } from '@/lib/api'
 
 export default function BookingModal() {
   const [availableBookings, setAvailableBookings] = useState(null)
@@ -21,7 +21,7 @@ export default function BookingModal() {
     try {
       const data = await getAvailability(dateString(0), dateString(14))
       
-      if (data  ) {
+      if (data) {
         const bookingsData = data
         
         // Convert array format to object format (like original code expects)
@@ -121,27 +121,54 @@ export default function BookingModal() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await registerBooking(
+      const success = await registerBooking(
         dateString(parseInt(selectedDay || 0)), 
         selectedStart || 0, 
         selectedEnd || 1, 
         npeople || 1
       )
-      // Use router.push instead of window.location.reload() to prevent hydration issues
-      if (typeof window !== 'undefined') {
-        window.location.href = window.location.pathname
+      
+      if (success) {
+        // Send booking confirmation email
+        try {
+          // Get user email from cookies or localStorage
+          let userEmail = 'user@example.com' // Default fallback
+          
+          // Try to get from cookies
+          if (typeof document !== 'undefined') {
+            const cookies = document.cookie.split(';')
+            const userCookie = cookies.find(c => c.trim().startsWith('user='))
+            if (userCookie) {
+              userEmail = decodeURIComponent(userCookie.split('=')[1])
+            }
+          }
+          
+          await sendBookingConfirmationEmail(userEmail, {
+            date: dateString(parseInt(selectedDay || 0)),
+            start: selectedStart || 0,
+            end: selectedEnd || 1,
+            npeople: npeople || 1
+          })
+        } catch (emailError) {
+          console.error('Failed to send booking confirmation email:', emailError)
+        }
+        
+        // Hide modal using Bootstrap
+        if (typeof window !== 'undefined' && window.$) {
+          try {
+            window.$('#hireme').modal('hide')
+          } catch (error) {
+            console.error('Error hiding modal:', error)
+          }
+        }
+        
+        // Refresh the page to show new booking
+        if (typeof window !== 'undefined') {
+          window.location.href = window.location.pathname
+        }
       }
     } catch (error) {
       console.error('Error creating booking:', error)
-    }
-    
-    // Hide modal using Bootstrap
-    if (typeof window !== 'undefined' && window.$) {
-      try {
-        window.$('#hireme').modal('hide')
-      } catch (error) {
-        console.error('Error hiding modal:', error)
-      }
     }
   }
 

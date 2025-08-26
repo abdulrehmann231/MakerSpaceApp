@@ -6,21 +6,27 @@ export function useSidebar() {
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
-    setIsOpen(document.body.classList.contains('menu-left-open'))
-  }, [document])
-
+    // Only run on client side
+    if (typeof document !== 'undefined') {
+      setIsOpen(document.body.classList.contains('menu-left-open'))
+    }
+  }, []) // Remove document from dependencies
 
   const openSidebar = () => {
     console.log('openSidebar')
-
-    document.body.classList.add('menu-left-open')
+    
+    if (typeof document !== 'undefined') {
+      document.body.classList.add('menu-left-open')
+    }
     setIsOpen(true)
   }
 
   const closeSidebar = () => {
     console.log('closeSidebar')
-
-    document.body.classList.remove('menu-left-open')
+    
+    if (typeof document !== 'undefined') {
+      document.body.classList.remove('menu-left-open')
+    }
     setIsOpen(false)
   }
 
@@ -31,7 +37,7 @@ export function useSidebar() {
         closeSidebar()
       }
     }
-  }, [])
+  }, []) // Add closeSidebar to dependencies for stability
 
   return { isOpen, openSidebar, closeSidebar }
 }
