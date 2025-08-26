@@ -29,21 +29,54 @@ export default function RegisterPage() {
     e.preventDefault()
     setIsLoading(true)
     
-    // Validation
+    // Comprehensive validation
     if (formData.code !== "HE8SXL4") {
-      alert("Incorrect code")
+      alert("Incorrect registration code")
       setIsLoading(false)
       return
     }
     
-    if (!formData.username.length) {
-      alert("Username is required")
+    if (!formData.firstname.trim()) {
+      alert("First name is required")
+      setIsLoading(false)
+      return
+    }
+    
+    if (!formData.lastname.trim()) {
+      alert("Last name is required")
+      setIsLoading(false)
+      return
+    }
+    
+    if (!formData.username.trim()) {
+      alert("Email is required")
+      setIsLoading(false)
+      return
+    }
+    
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.username)) {
+      alert("Please enter a valid email address")
+      setIsLoading(false)
+      return
+    }
+    
+    if (!formData.password) {
+      alert("Password is required")
+      setIsLoading(false)
+      return
+    }
+    
+    // Password strength validation
+    if (formData.password.length < 4) {
+      alert("Password must be at least 4 characters long")
       setIsLoading(false)
       return
     }
     
     if (formData.password !== formData.password2) {
-      alert("Passwords do not match.")
+      alert("Passwords do not match")
       setIsLoading(false)
       return
     }
