@@ -1,10 +1,14 @@
 'use client'
 
+import { useEffect } from 'react'
 import SearchBar from './SearchBar'
 import Header from './Header'
 import Footer from './Footer'
+import { useStickyFooter } from '@/hooks/useStickyFooter'
 
 export default function Page({ children }) {
+  useStickyFooter()
+
   return (
     <div className="page">
       <SearchBar />
@@ -15,7 +19,6 @@ export default function Page({ children }) {
         </div>
         <Footer />
       </div>
-      
     </div>
   )
 }

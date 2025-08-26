@@ -2,57 +2,60 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
+import { useSidebar } from '@/hooks/useSidebar'
 import { signout } from '@/lib/api'
 
 export default function Sidebar({ firstname = "User" }) {
   const pathname = usePathname()
   const router = useRouter()
-  const sidebarRef = useRef(null)
+  const { closeSidebar, isOpen } = useSidebar()
 
   const handleLogout = async (e) => {
     e.preventDefault()
     await signout()
     router.push('/login')
+    handleSidebarClose()
+  }
+
+  const handleSidebarClose = () => {
+    closeSidebar()
   }
 
   // Handle click outside sidebar
   useEffect(() => {
     const handleClickOutside = (event) => {
-      console.log(event.target);
-      console.log(event.target.closest('.sidebar-close'));
-      console.log("sidebar close")
+      console.log('handleClickOutside', isOpen)
       // Check if sidebar is open
-      console.log(document.body.classList);
       if (document.body.classList.contains('menu-left-open')) {
-        // Check if click is outside sidebar and on backdrop
-        console.log(event.target.classList);
-        console.log(event);
-        const classes = ["sidebar" , "profile-link" , "navbar" , "nav-item" , "item-title" , "material-icons" , "btn" , "btn-link" , "btn-block"]
+        // Check if click is outside sidebar and not on sidebar elements
+        const isSidebarClick = event.target.closest('.sidebar') || 
+                              event.target.closest('.profile-link') || 
+                              event.target.closest('.navbar') || 
+                              event.target.closest('.nav-item') || 
+                              event.target.closest('.item-title') || 
+                              event.target.closest('.material-icons') || 
+                              event.target.closest('.btn') || 
+                              event.target.closest('.btn-link') || 
+                              event.target.closest('.btn-block')
 
-        if (!classes.some(className => event.target.classList.contains(className))) {
-          console.log('Click outside sidebar detected');
-          document.body.classList.remove('menu-left-open');
-          const backdrop = document.querySelector('.backdrop');
-          if (backdrop) {
-            backdrop.style.opacity = '0';
-            setTimeout(() => backdrop.remove(), 300);
-          }
+        if (!isSidebarClick) {
+          closeSidebar()
         }
       }
-    };
+    }
 
     // Add event listener
-    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('click', handleClickOutside)
 
     // Cleanup
     return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, []);
+      document.removeEventListener('click', handleClickOutside)
+    }
+  }, [isOpen, closeSidebar])
 
   return (
-    <div className="sidebar sidebar-left" ref={sidebarRef}>
+    <div className="sidebar sidebar-left">
       <div className="profile-link">
         <a href="/account" className="media" style={{ display: "true" }}>
           <div className="w-auto h-100">
@@ -74,6 +77,7 @@ export default function Sidebar({ firstname = "User" }) {
             <Link 
               href="/account" 
               className={`sidebar-close ${pathname === '/account' ? 'active' : ''}`}
+              onClick={handleSidebarClose}
             >
               <div className="item-title">
                 <i className="material-icons">account_circle</i>Account
@@ -84,6 +88,7 @@ export default function Sidebar({ firstname = "User" }) {
             <Link 
               href="/bookings" 
               className={`sidebar-close ${pathname === '/bookings' ? 'active' : ''}`}
+              onClick={handleSidebarClose}
             >
               <div className="item-title">
                 <i className="material-icons ">menu</i>Bookings
@@ -94,6 +99,7 @@ export default function Sidebar({ firstname = "User" }) {
             <Link 
               href="/contact" 
               className={`sidebar-close ${pathname === '/contact' ? 'active' : ''}`}
+              onClick={handleSidebarClose}
             >
               <div className="item-title">
                 <i className="material-icons">add_location</i> Contact Us
