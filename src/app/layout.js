@@ -1,4 +1,5 @@
 import Script from "next/script";
+import ThemeController from "@/components/ThemeController";
 
 export const metadata = {
   title: "MakerSpace Delft",
@@ -17,27 +18,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="color-theme-blue push-content-right theme-light">
         {children}
-        
-        {/* JavaScript Files - Load in correct order */}
-        <Script 
-          src="/js/jquery-3.2.1.min.js" 
-          strategy="beforeInteractive"
-        />
-        
-        <Script 
-          src="/vendor/cookie/jquery.cookie.js" 
-          strategy="beforeInteractive"
-        />
-        
-        <Script 
-          src="/vendor/bootstrap-4.1.3/js/bootstrap.min.js" 
-          strategy="afterInteractive"
-        />
-        
-        <Script 
-          src="/js/main.js" 
-          strategy="afterInteractive"
-        />
+        <ThemeController />
       </body>
     </html>
   );

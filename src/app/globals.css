@@ -2481,3 +2481,33 @@ body.theme-dark.color-theme-black .page {
 .no-top-gap {
     margin-top: -20px;
 }
+
+/* Add cursor pointer utility */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Modal backdrop styling */
+.modal.show {
+  display: block !important;
+}
+
+.modal.show .modal-dialog {
+  transform: none;
+}
+
+/* Ensure backdrop covers the entire screen */
+.modal.show::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+}
+
+.modal.show .modal-dialog {
+  z-index: 1050;
+}
