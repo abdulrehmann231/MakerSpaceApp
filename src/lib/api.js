@@ -189,10 +189,17 @@ export async function registerBooking(date, start, end, people, description = ""
 
     const data = await handleResponse(response);
     if (data === false) return false; // 401 error handled
-    return data.code === 'BOOKED';
+    
+    // Check if the response indicates success
+    if (data.code === 'BOOKED') {
+      return true;
+    } else {
+      // Throw error with the message from the server
+      throw new Error(data.msg || 'Booking creation failed');
+    }
   } catch (error) {
     console.error('Register booking error:', error);
-    return false;
+    throw error;
   }
 }
 
@@ -237,24 +244,24 @@ export async function setUserData(email, userData) {
 
 // Utility functions
 export function dateString(n) {
-  const d = new Date()
-  d.setDate(d.getDate() + n)
-  return d.toISOString().replace(/T.*/, '')
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.toISOString().replace(/T.*/, '');
 }
 
 export function dateId(n) {
-  const d = new Date()
-  d.setDate(d.getDate() + n)
-  return d.valueOf() - (new Date(2020, 1, 1)).valueOf()
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.valueOf() - (new Date(2020, 1, 1)).valueOf();
 }
 
 export function formatDate(d) {
-  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-  return days[d.getDay()] + ", " + months[d.getMonth()] + " " + d.getDate()
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  return days[d.getDay()] + ", " + months[d.getMonth()] + " " + d.getDate();
 }
 
 export function formatDateId(dateId) {
-  const d = new Date(parseInt(dateId) + (new Date(2020, 1, 1)).valueOf())
-  return formatDate(d)
+  const d = new Date(parseInt(dateId)+(new Date(2020, 1, 1)).valueOf());
+  return formatDate(d);
 }

@@ -121,6 +121,8 @@ export default function BookingModal() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
+
+      
       const success = await registerBooking(
         dateString(parseInt(selectedDay || 0)), 
         selectedStart || 0, 
@@ -142,6 +144,11 @@ export default function BookingModal() {
               userEmail = decodeURIComponent(userCookie.split('=')[1])
             }
           }
+
+          console.log(selectedDay, 'selectedDay');
+          console.log(selectedStart, 'selectedStart');
+          console.log(selectedEnd, 'selectedEnd');
+          console.log(npeople, 'npeople');
           
           await sendBookingConfirmationEmail(userEmail, {
             date: dateString(parseInt(selectedDay || 0)),
@@ -166,9 +173,31 @@ export default function BookingModal() {
         if (typeof window !== 'undefined') {
           window.location.href = window.location.pathname
         }
+      } else {
+        // Show error message to user
+        alert('Failed to create booking. Please try again.')
       }
     } catch (error) {
       console.error('Error creating booking:', error)
+      
+      // Show specific error message based on the error
+      let errorMessage = 'Failed to create booking. Please try again.'
+      
+      if (error.message) {
+        if (error.message.includes('Invalid booking details')) {
+          errorMessage = 'Invalid booking details. Please check your date and time selection.'
+        } else if (error.message.includes('Please log in')) {
+          errorMessage = 'Please log in to create a booking.'
+        } else if (error.message.includes('Service temporarily unavailable')) {
+          errorMessage = 'Service temporarily unavailable. Please try again later.'
+        } else if (error.message.includes('Unable to create booking')) {
+          errorMessage = 'Unable to create booking. Please check your internet connection and try again.'
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
+      alert(errorMessage)
     }
   }
 
@@ -216,19 +245,12 @@ export default function BookingModal() {
                       
                       (availableBookings? Object.keys(availableBookings) : []).map((e, i) => {
                         let dateName = ""
-                        try {
-                          
-                          if (i === 0) {
-                            dateName = "Today"
-                          } else if (i === 1) {
-                            dateName = "Tomorrow"
-                          } else {
-                            dateName = formatDate(new Date(Date.now() + 24 * 60 * 60 * 1000 * parseInt(i)))
-                          }
-                        } catch (error) {
-                          console.error('Error formatting date:', error)
-                          dateName = `Day ${i}`
-                        }
+                        if (i === 0)
+                            dateName = "Today"; 
+                        else if (i === 1)
+                            dateName = "Tomorrow";
+                        else
+                            dateName = formatDate(new Date(Date.now() + 24 * 60 * 60 * 1000 * parseInt(i)));
                         return <option key={i} value={i}>{dateName}</option>
                       })}
                     </select>

@@ -25,7 +25,8 @@ const getBookingConfirmationTemplate = (userEmail, bookingDetails) => {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
+    timeZone: 'Europe/Athens'
   });
 
   return {

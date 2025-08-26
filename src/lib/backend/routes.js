@@ -97,18 +97,52 @@ const dateEquals = (d, od, recur = false) => (
 );
 
 export const createBooking = async (userCollection, timeCollection, { body, headers }) => {
-    if (body.date && body.start && body.end) {
+    // Convert and validate the required fields
+    const date = body.date;
+    const start = parseInt(body.start);
+    const end = parseInt(body.end);
+    const npeople = parseInt(body.npeople) || 1;
+    
+    // Check if all required fields are present and valid
+    if (date && typeof start === 'number' && !isNaN(start) && typeof end === 'number' && !isNaN(end)) {
         const ckies = headers.cookie && parseCookies(headers.cookie);
         const decodedEmail = ckies && ckies.user ? decodeURIComponent(ckies.user) : null;
         const user = ckies && ckies.auth && decodedEmail && await getUser(decodedEmail, userCollection);
         const bookingId = (new Date()).valueOf() - (new Date(2020, 1, 1)).valueOf();
         if (user && user.token === ckies.auth) {
-            const record = { ...body, id: bookingId, user: user.key, npeople: body.npeople || 1 };
-            console.log(record);
+            const record = { 
+                date, 
+                start, 
+                end, 
+                id: bookingId, 
+                user: user.key, 
+                npeople,
+                description: body.description || ''
+            };
             const res = await putBooking(timeCollection, record);
             return response({ msg: "Successfully Booked", code: "BOOKED" }, "200");
         } else return authFailed();
-    } else return response({ msg: "Incorrect Booking Format", code: "BFORMAT" }, "502");
+    } else {
+        // Provide more specific error messages based on what's missing
+        let errorMsg = "Invalid booking details. Please check your date and time selection.";
+        
+        if (!date) {
+            errorMsg = "Please select a valid date for your booking.";
+        } else if (typeof start !== 'number' || isNaN(start)) {
+            errorMsg = "Please select a valid start time for your booking.";
+        } else if (typeof end !== 'number' || isNaN(end)) {
+            errorMsg = "Please select a valid end time for your booking.";
+        } else if (start >= end) {
+            errorMsg = "End time must be after start time.";
+        } else if (start < 0 || start > 23 || end < 1 || end > 24) {
+            errorMsg = "Please select valid times between 0:00 and 24:00.";
+        }
+        
+        return response({ 
+            msg: errorMsg, 
+            code: "BFORMAT" 
+        }, "400");
+    }
 };
 
 export const seeBookings = async (userCollection, timeCollection, configCollection, { queryStringParameters: { from, to, see }, headers }) => {
