@@ -59,7 +59,7 @@ const getBookingConfirmationTemplate = (userEmail, bookingDetails) => {
             <p style="color: #666; font-size: 14px;">
               Best regards,<br>
               The Makerspace Delft Team<br>
-              <a href="mailto:info@makerspacedelft.nl" style="color: #667eea;">info@makerspacedelft.nl</a>
+              <a href="mailto:contact@makerspacedelft.nl" style="color: #667eea;">contact@makerspacedelft.nl</a>
             </p>
           </div>
         </div>
@@ -68,7 +68,7 @@ const getBookingConfirmationTemplate = (userEmail, bookingDetails) => {
   };
 };
 
-const getWelcomeTemplate = (userEmail, firstName) => {
+const getWelcomeTemplate = ( firstName, baseUrl) => {
   return {
     subject: 'Welcome to Makerspace Delft!',
     html: `
@@ -95,7 +95,7 @@ const getWelcomeTemplate = (userEmail, firstName) => {
           <p>If you have any questions or need assistance, don't hesitate to reach out to us.</p>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/bookings" 
+            <a href="${baseUrl}/bookings" 
                style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
               Book Your First Session
             </a>
@@ -105,7 +105,7 @@ const getWelcomeTemplate = (userEmail, firstName) => {
             <p style="color: #666; font-size: 14px;">
               Best regards,<br>
               The Makerspace Delft Team<br>
-              <a href="mailto:info@makerspacedelft.nl" style="color: #667eea;">info@makerspacedelft.nl</a>
+              <a href="mailto:contact@makerspacedelft.nl" style="color: #667eea;">contact@makerspacedelft.nl</a>
             </p>
           </div>
         </div>
@@ -135,6 +135,11 @@ export async function POST(request) {
         { status: 500 }
       );
     }
+
+    // Get base URL from request headers
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+    const host = request.headers.get('host') || 'localhost:3000';
+    const baseUrl = `${protocol}://${host}`;
 
     const transporter = createTransporter();
 
@@ -172,7 +177,7 @@ export async function POST(request) {
             { status: 400 }
           );
         }
-        emailContent = getWelcomeTemplate(userEmail, firstName);
+        emailContent = getWelcomeTemplate( firstName, baseUrl);
         break;
 
       default:
