@@ -14,7 +14,7 @@ export default function ContactPage() {
               </p>
             </div>
           </div>
-          <a href="https://makerspacedelft.slack.com/" target="_blank" className="btn btn-block btn-outline-secondary rounded">Slack</a>
+          <a href="https://discord.com/invite/qHVbghbW" target="_blank" className="btn btn-block btn-outline-secondary rounded">Discord</a>
           <a href="mailto:contact@makerspacedelft.nl" target="_blank" className="btn btn-block btn-outline-secondary rounded">Email</a>
         </div>
       </div>
