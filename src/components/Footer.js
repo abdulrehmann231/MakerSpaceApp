@@ -11,10 +11,11 @@ export default function Footer() {
             Overux
           </div>
           <div className="col-7 text-right">
-            <Link href="/" className="social"><img src="/img/facebook.png" alt="" /></Link>
-            <Link href="/" className="social"><img src="/img/googleplus.png" alt="" /></Link>
-            <Link href="/" className="social"><img src="/img/linkedin.png" alt="" /></Link>
-            <Link href="/" className="social"><img src="/img/twitter.png" alt="" /></Link>
+            <Link href="https://www.facebook.com/makerspacedelft/" className="social"><img src="/img/facebook.png" alt="" /></Link>
+            <Link href="https://www.instagram.com/makerspacedelft" className="social"><img src="/img/instagram.png" alt="" /></Link>
+            <Link href="https://discord.com/invite/qHVbghbW" className="social"><img src="/img/discord.png" alt="" /></Link>
+            <Link href="https://www.linkedin.com/company/makerspacedelft/posts/?feedView=all" className="social"><img src="/img/linkedin.png" alt="" /></Link>
+            <Link href="https://www.makerspacedelft.nl/" className="social"><img src="/img/website.png" alt="" /></Link>
           </div>
         </div>
       </div>
