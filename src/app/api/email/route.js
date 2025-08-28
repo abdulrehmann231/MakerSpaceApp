@@ -67,7 +67,7 @@ const getBookingConfirmationTemplate = (userEmail, bookingDetails, themeColor = 
             <p style="color: ${textColor};"><strong>Location:</strong> Makerspace Delft</p>
           </div>
           
-          <p style="color: ${textColor};">Please arrive 10 minutes before your scheduled time. If you need to cancel or modify your booking, please contact us as soon as possible.</p>
+          <p style="color: ${textColor};">Please arrive 10 minutes before your scheduled time. If you need any assistance, you can contact us on our <a href="https://discord.com/invite/qHVbghbW" style="color: ${primaryColor};">Discord</a>.</p>
           
           <p style="color: ${textColor};">Thank you for choosing Makerspace Delft!</p>
           
