@@ -9,6 +9,80 @@ function handleResponse(response) {
   return response.json();
 }
 
+// Simple cookie utility functions
+const getCookie = (name) => {
+  if (typeof document === 'undefined') return null
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) return parts.pop().split(';').shift()
+  return null
+}
+
+// Email utility functions using Nodemailer
+export async function sendBookingConfirmationEmail(userEmail, bookingDetails) {
+  try {
+    // Get current theme from cookies
+    const themeColor = getCookie('theme-color') || 'color-theme-blue'
+    const themeLayout = getCookie('theme-color-layout') || 'theme-light'
+    const isDarkMode = themeLayout === 'theme-dark'
+
+    const response = await fetch('/api/email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'booking-confirmation',
+        userEmail,
+        bookingDetails,
+        themeColor,
+        isDarkMode
+      })
+    });
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to send email');
+    }
+    return result;
+  } catch (error) {
+    console.error('Send booking confirmation email error:', error);
+    throw error;
+  }
+}
+
+export async function sendWelcomeEmail(userEmail, firstName) {
+  try {
+    // Get current theme from cookies
+    const themeColor = getCookie('theme-color') || 'color-theme-blue'
+    const themeLayout = getCookie('theme-color-layout') || 'theme-light'
+    const isDarkMode = themeLayout === 'theme-dark'
+
+    const response = await fetch('/api/email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'welcome',
+        userEmail,
+        firstName,
+        themeColor,
+        isDarkMode
+      })
+    });
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to send email');
+    }
+    return result;
+  } catch (error) {
+    console.error('Send welcome email error:', error);
+    throw error;
+  }
+}
+
 // API functions for Next.js backend
 export async function signin(email, password) {
   try {
@@ -140,10 +214,17 @@ export async function registerBooking(date, start, end, people, description = ""
 
     const data = await handleResponse(response);
     if (data === false) return false; // 401 error handled
-    return data.code === 'BOOKED';
+    
+    // Check if the response indicates success
+    if (data.code === 'BOOKED') {
+      return true;
+    } else {
+      // Throw error with the message from the server
+      throw new Error(data.msg || 'Booking creation failed');
+    }
   } catch (error) {
     console.error('Register booking error:', error);
-    return false;
+    throw error;
   }
 }
 
@@ -188,24 +269,24 @@ export async function setUserData(email, userData) {
 
 // Utility functions
 export function dateString(n) {
-  const d = new Date()
-  d.setDate(d.getDate() + n)
-  return d.toISOString().replace(/T.*/, '')
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.toISOString().replace(/T.*/, '');
 }
 
 export function dateId(n) {
-  const d = new Date()
-  d.setDate(d.getDate() + n)
-  return d.valueOf() - (new Date(2020, 1, 1)).valueOf()
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.valueOf() - (new Date(2020, 1, 1)).valueOf();
 }
 
 export function formatDate(d) {
-  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-  return days[d.getDay()] + ", " + months[d.getMonth()] + " " + d.getDate()
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  return days[d.getDay()] + ", " + months[d.getMonth()] + " " + d.getDate();
 }
 
 export function formatDateId(dateId) {
-  const d = new Date(parseInt(dateId) + (new Date(2020, 1, 1)).valueOf())
-  return formatDate(d)
+  const d = new Date(parseInt(dateId)+(new Date(2020, 1, 1)).valueOf());
+  return formatDate(d);
 }

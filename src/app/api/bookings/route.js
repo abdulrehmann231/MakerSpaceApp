@@ -48,12 +48,42 @@ export async function POST(request) {
       return NextResponse.json(bodyData, { status: 200 });
     } else {
       const bodyData = JSON.parse(result.body);
-      return NextResponse.json(bodyData, { status: parseInt(result.statusCode) });
+      const statusCode = parseInt(result.statusCode);
+      
+      // Handle specific error cases with meaningful messages
+      let errorMessage = 'Booking creation failed';
+      
+      if (statusCode === 400 && bodyData.code === 'BFORMAT') {
+        errorMessage = 'Invalid booking details. Please check your date and time selection.';
+      } else if (statusCode === 401) {
+        errorMessage = 'Please log in to create a booking.';
+      } else if (statusCode === 502) {
+        errorMessage = 'Service temporarily unavailable. Please try again later.';
+      } else if (bodyData.msg) {
+        errorMessage = bodyData.msg;
+      }
+      
+      // Log the error for debugging
+      console.error('Booking creation failed:', {
+        statusCode,
+        bodyData,
+        errorMessage,
+        originalBody: body
+      });
+      
+      return NextResponse.json({
+        code: bodyData.code || 'ERROR',
+        msg: errorMessage,
+        originalError: bodyData
+      }, { status: statusCode });
     }
   } catch (error) {
     console.error('Create booking error:', error);
     return NextResponse.json(
-      { code: 'ERROR', msg: error.message },
+      { 
+        code: 'ERROR', 
+        msg: 'Unable to create booking. Please check your internet connection and try again.' 
+      },
       { status: 500 }
     );
   }

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { register } from '@/lib/api'
+import { register, sendWelcomeEmail } from '@/lib/api'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -29,21 +29,54 @@ export default function RegisterPage() {
     e.preventDefault()
     setIsLoading(true)
     
-    // Validation
+    // Comprehensive validation
     if (formData.code !== "HE8SXL4") {
-      alert("Incorrect code")
+      alert("Incorrect registration code")
       setIsLoading(false)
       return
     }
     
-    if (!formData.username.length) {
-      alert("Username is required")
+    if (!formData.firstname.trim()) {
+      alert("First name is required")
+      setIsLoading(false)
+      return
+    }
+    
+    if (!formData.lastname.trim()) {
+      alert("Last name is required")
+      setIsLoading(false)
+      return
+    }
+    
+    if (!formData.username.trim()) {
+      alert("Email is required")
+      setIsLoading(false)
+      return
+    }
+    
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.username)) {
+      alert("Please enter a valid email address")
+      setIsLoading(false)
+      return
+    }
+    
+    if (!formData.password) {
+      alert("Password is required")
+      setIsLoading(false)
+      return
+    }
+    
+    // Password strength validation
+    if (formData.password.length < 4) {
+      alert("Password must be at least 4 characters long")
       setIsLoading(false)
       return
     }
     
     if (formData.password !== formData.password2) {
-      alert("Passwords do not match.")
+      alert("Passwords do not match")
       setIsLoading(false)
       return
     }
@@ -56,6 +89,14 @@ export default function RegisterPage() {
         formData.lastname
       )
       if (result) {
+        // Send welcome email
+        try {
+          await sendWelcomeEmail(formData.username, formData.firstname)
+        } catch (emailError) {
+          console.error('Failed to send welcome email:', emailError)
+          // Don't fail registration if email fails
+        }
+        
         router.push('/account')
       }
     } catch (error) {
@@ -142,32 +183,26 @@ export default function RegisterPage() {
                     value={formData.password2}
                     onChange={handleChange}
                     className="form-control rounded text-center"
-                    placeholder="Password"
+                    placeholder="Confirm password"
                     disabled={isLoading}
                   />
                 </div>
                 <input
                   type="submit"
-                  className="btn btn-block btn-success rounded border-0 z-3"
-                  value={isLoading ? "Signing up..." : "Sign up"}
+                  value={isLoading ? "Registering..." : "Register"}
+                  className="btn btn-block btn-primary btn-lg rounded border-0"
                   disabled={isLoading}
                 />
               </div>
             </form>
             
-            <br />
-            <br />
-            <div className="row no-gutters">
-              <div className="col-12 text-center text-white">
-                Already have account?<br />
-                Please <Link href="/login" className="text-white font-weight-bold mt-3">
-                  Sign In
-                </Link> here.
-              </div>
+            <div className="mt-4">
+              <Link href="/login" className="text-white">
+                Already have an account? Login here
+              </Link>
             </div>
           </div>
         </div>
-        <br />
       </div>
     </div>
   )
