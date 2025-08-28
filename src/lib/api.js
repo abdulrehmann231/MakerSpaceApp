@@ -9,52 +9,77 @@ function handleResponse(response) {
   return response.json();
 }
 
+// Simple cookie utility functions
+const getCookie = (name) => {
+  if (typeof document === 'undefined') return null
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) return parts.pop().split(';').shift()
+  return null
+}
+
 // Email utility functions using Nodemailer
 export async function sendBookingConfirmationEmail(userEmail, bookingDetails) {
   try {
+    // Get current theme from cookies
+    const themeColor = getCookie('theme-color') || 'color-theme-blue'
+    const themeLayout = getCookie('theme-color-layout') || 'theme-light'
+    const isDarkMode = themeLayout === 'theme-dark'
+
     const response = await fetch('/api/email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
       body: JSON.stringify({
         type: 'booking-confirmation',
         userEmail,
-        bookingDetails
+        bookingDetails,
+        themeColor,
+        isDarkMode
       })
     });
 
-    const data = await handleResponse(response);
-    if (data === false) return false; // 401 error handled
-    return data.success === true;
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to send email');
+    }
+    return result;
   } catch (error) {
     console.error('Send booking confirmation email error:', error);
-    return false;
+    throw error;
   }
 }
 
 export async function sendWelcomeEmail(userEmail, firstName) {
   try {
+    // Get current theme from cookies
+    const themeColor = getCookie('theme-color') || 'color-theme-blue'
+    const themeLayout = getCookie('theme-color-layout') || 'theme-light'
+    const isDarkMode = themeLayout === 'theme-dark'
+
     const response = await fetch('/api/email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
       body: JSON.stringify({
         type: 'welcome',
         userEmail,
-        firstName
+        firstName,
+        themeColor,
+        isDarkMode
       })
     });
 
-    const data = await handleResponse(response);
-    if (data === false) return false; // 401 error handled
-    return data.success === true;
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to send email');
+    }
+    return result;
   } catch (error) {
     console.error('Send welcome email error:', error);
-    return false;
+    throw error;
   }
 }
 

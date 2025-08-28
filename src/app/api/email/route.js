@@ -16,10 +16,20 @@ const createTransporter = () => {
   });
 };
 
-
+// Theme color mapping
+const themeColors = {
+  'color-theme-blue': '#2CAAE6',
+  'color-theme-red': '#FF4141',
+  'color-theme-green': '#12c150',
+  'color-theme-pink': '#ff0076',
+  'color-theme-yellow': '#ffc617',
+  'color-theme-orange': '#ff8900',
+  'color-theme-gray': '#485563',
+  'color-theme-black': '#333333'
+};
 
 // Email templates
-const getBookingConfirmationTemplate = (userEmail, bookingDetails) => {
+const getBookingConfirmationTemplate = (userEmail, bookingDetails, themeColor = 'color-theme-blue', isDarkMode = false) => {
   const { date, start, end, npeople } = bookingDetails;
   const formattedDate = new Date(date).toLocaleDateString('en-GB', {
     weekday: 'long',
@@ -29,62 +39,75 @@ const getBookingConfirmationTemplate = (userEmail, bookingDetails) => {
     timeZone: 'Europe/Athens'
   });
 
+  const primaryColor = themeColors[themeColor] || themeColors['color-theme-blue'];
+  const backgroundColor = isDarkMode ? '#1a1a1a' : '#f9f9f9';
+  const textColor = isDarkMode ? '#ffffff' : '#333333';
+  const cardBackground = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : '#ffffff';
+  const secondaryTextColor = isDarkMode ? 'rgba(255, 255, 255, 0.7)' : '#666666';
+
   return {
     subject: 'Booking Confirmation - Makerspace Delft',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: ${backgroundColor};">
+        <div style="background: linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%); padding: 30px; text-align: center;">
           <h1 style="color: white; margin: 0;">Makerspace Delft</h1>
           <p style="color: white; margin: 10px 0 0 0;">Booking Confirmation</p>
         </div>
         
-        <div style="padding: 30px; background: #f9f9f9;">
-          <h2 style="color: #333; margin-top: 0;">Booking Confirmed!</h2>
-          <p>Dear User,</p>
-          <p>Your booking has been successfully confirmed. Here are the details:</p>
+        <div style="padding: 30px; background-color: ${backgroundColor};">
+          <h2 style="color: ${textColor}; margin-top: 0;">Booking Confirmed!</h2>
+          <p style="color: ${textColor};">Dear User,</p>
+          <p style="color: ${textColor};">Your booking has been successfully confirmed. Here are the details:</p>
           
-          <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="color: #667eea; margin-top: 0;">Booking Details</h3>
-            <p><strong>Date:</strong> ${formattedDate}</p>
-            <p><strong>Time:</strong> ${start}:00 - ${end}:00</p>
-            <p><strong>Number of People:</strong> ${npeople}</p>
-            <p><strong>Location:</strong> Makerspace Delft</p>
+          <div style="background: ${cardBackground}; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : '#eee'};">
+            <h3 style="color: ${primaryColor}; margin-top: 0;">Booking Details</h3>
+            <p style="color: ${textColor};"><strong>Date:</strong> ${formattedDate}</p>
+            <p style="color: ${textColor};"><strong>Time:</strong> ${start}:00 - ${end}:00</p>
+            <p style="color: ${textColor};"><strong>Number of People:</strong> ${npeople}</p>
+            <p style="color: ${textColor};"><strong>Location:</strong> Makerspace Delft</p>
           </div>
           
-          <p>Please arrive 10 minutes before your scheduled time. If you need to cancel or modify your booking, please contact us as soon as possible.</p>
+          <p style="color: ${textColor};">Please arrive 10 minutes before your scheduled time. If you need to cancel or modify your booking, please contact us as soon as possible.</p>
           
-          <p>Thank you for choosing Makerspace Delft!</p>
+          <p style="color: ${textColor};">Thank you for choosing Makerspace Delft!</p>
           
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-            <p style="color: #666; font-size: 14px;">
+        </div>
+          <div style="margin-top: 30px; padding: 30px; padding-top: 20px; border-top: 1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : '#eee'}; background-color: ${primaryColor};">
+            <p style="color: white; font-size: 14px;">
               Best regards,<br>
               The Makerspace Delft Team<br>
-              <a href="mailto:contact@makerspacedelft.nl" style="color: #667eea;">contact@makerspacedelft.nl</a>
+              <a href="mailto:contact@makerspacedelft.nl" style="color: ${textColor};">contact@makerspacedelft.nl</a>
             </p>
           </div>
-        </div>
+        
       </div>
     `
   };
 };
 
-const getWelcomeTemplate = ( firstName, baseUrl) => {
+const getWelcomeTemplate = (firstName, baseUrl, themeColor = 'color-theme-blue', isDarkMode = false) => {
+  const primaryColor = themeColors[themeColor] || themeColors['color-theme-blue'];
+  const backgroundColor = isDarkMode ? '#1a1a1a' : '#f9f9f9';
+  const textColor = isDarkMode ? '#ffffff' : '#333333';
+  const cardBackground = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : '#ffffff';
+  const secondaryTextColor = isDarkMode ? 'rgba(255, 255, 255, 0.7)' : '#666666';
+
   return {
     subject: 'Welcome to Makerspace Delft!',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: ${backgroundColor};">
+        <div style="background: linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%); padding: 30px; text-align: center;">
           <h1 style="color: white; margin: 0;">Makerspace Delft</h1>
           <p style="color: white; margin: 10px 0 0 0;">Welcome to Our Community!</p>
         </div>
         
-        <div style="padding: 30px; background: #f9f9f9;">
-          <h2 style="color: #333; margin-top: 0;">Welcome, ${firstName}!</h2>
-          <p>Thank you for joining Makerspace Delft! We're excited to have you as part of our community.</p>
+        <div style="padding: 30px; background-color: ${backgroundColor};">
+          <h2 style="color: ${textColor}; margin-top: 0;">Welcome, ${firstName}!</h2>
+          <p style="color: ${textColor};">Thank you for joining Makerspace Delft! We're excited to have you as part of our community.</p>
           
-          <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="color: #667eea; margin-top: 0;">What's Next?</h3>
-            <ul style="color: #333;">
+          <div style="background: ${cardBackground}; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : '#eee'};">
+            <h3 style="color: ${primaryColor}; margin-top: 0;">What's Next?</h3>
+            <ul style="color: ${textColor};">
               <li>Explore our available equipment and facilities</li>
               <li>Book your first session</li>
               <li>Join our community events</li>
@@ -92,20 +115,20 @@ const getWelcomeTemplate = ( firstName, baseUrl) => {
             </ul>
           </div>
           
-          <p>If you have any questions or need assistance, don't hesitate to reach out to us.</p>
+          <p style="color: ${textColor};">If you have any questions or need assistance, don't hesitate to reach out to us.</p>
           
           <div style="text-align: center; margin: 30px 0;">
             <a href="${baseUrl}/bookings" 
-               style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+               style="background: ${primaryColor}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
               Book Your First Session
             </a>
           </div>
           
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-            <p style="color: #666; font-size: 14px;">
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : '#eee'};">
+            <p style="color: ${secondaryTextColor}; font-size: 14px;">
               Best regards,<br>
               The Makerspace Delft Team<br>
-              <a href="mailto:contact@makerspacedelft.nl" style="color: #667eea;">contact@makerspacedelft.nl</a>
+              <a href="mailto:contact@makerspacedelft.nl" style="color: ${primaryColor};">contact@makerspacedelft.nl</a>
             </p>
           </div>
         </div>
@@ -117,7 +140,7 @@ const getWelcomeTemplate = ( firstName, baseUrl) => {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { type, userEmail, bookingDetails, firstName } = body;
+    const { type, userEmail, bookingDetails, firstName, themeColor, isDarkMode } = body;
 
     // Validate required fields
     if (!type || !userEmail) {
@@ -167,7 +190,7 @@ export async function POST(request) {
             { status: 400 }
           );
         }
-        emailContent = getBookingConfirmationTemplate(userEmail, bookingDetails);
+        emailContent = getBookingConfirmationTemplate(userEmail, bookingDetails, themeColor, isDarkMode);
         break;
 
       case 'welcome':
@@ -177,7 +200,7 @@ export async function POST(request) {
             { status: 400 }
           );
         }
-        emailContent = getWelcomeTemplate( firstName, baseUrl);
+        emailContent = getWelcomeTemplate(firstName, baseUrl, themeColor, isDarkMode);
         break;
 
       default:
