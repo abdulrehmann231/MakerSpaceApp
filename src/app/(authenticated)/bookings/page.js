@@ -12,7 +12,7 @@ export default function BookingsPage() {
     const loadBookings = async () => {
       try {
         const data = await bookings()
-        if (data && data.code === "FOUND") {
+        if (data && data.code === "FOUND") { 
           setBookingsData(data.msg || [])
         } else {
           setBookingsData([])
@@ -50,7 +50,10 @@ export default function BookingsPage() {
         try {
           const data = await bookings()
           if (data && data.code === "FOUND") {
-            setBookingsData(data.msg || [])
+             setBookingsData(data.msg || [])
+          }
+          else{
+            setBookingsData([])
           }
         } catch (error) {
           console.error('Error reloading bookings:', error)

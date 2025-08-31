@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
-
+import { decodeToken } from '@/lib/backend/jwt';
+import { parseCookies } from '@/lib/backend/encrypt';
 // Create transporter for Nodemailer
 const createTransporter = () => {
   // For Gmail (you can change this to other providers)
@@ -140,10 +141,10 @@ const getWelcomeTemplate = (firstName, baseUrl, themeColor = 'color-theme-blue',
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { type, userEmail, bookingDetails, firstName, themeColor, isDarkMode } = body;
+    const { type, bookingDetails, firstName, themeColor, isDarkMode } = body;
 
     // Validate required fields
-    if (!type || !userEmail) {
+    if (!type) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
@@ -163,6 +164,26 @@ export async function POST(request) {
     const protocol = request.headers.get('x-forwarded-proto') || 'http';
     const host = request.headers.get('host') || 'localhost:3000';
     const baseUrl = `${protocol}://${host}`;
+    const cookieHeader = request.headers.get('cookie');
+    const cookies = cookieHeader && parseCookies(cookieHeader);
+    const authToken = cookies?.auth;
+    
+    if (!authToken) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    
+    const decodedToken = decodeToken(authToken);
+    if (!decodedToken || !decodedToken.email) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid authentication token' },
+        { status: 401 }
+      );
+    }
+    
+    const userEmail = decodedToken.email;
 
     const transporter = createTransporter();
 

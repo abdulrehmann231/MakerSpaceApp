@@ -133,20 +133,7 @@ export default function BookingModal() {
       if (success) {
         // Send booking confirmation email
         try {
-          // Get user email from cookies or localStorage
-          let userEmail = 'user@example.com' // Default fallback
-          
-          // Try to get from cookies
-          if (typeof document !== 'undefined') {
-            const cookies = document.cookie.split(';')
-            const userCookie = cookies.find(c => c.trim().startsWith('user='))
-            if (userCookie) {
-              userEmail = decodeURIComponent(userCookie.split('=')[1])
-            }
-          }
-
-          
-          await sendBookingConfirmationEmail(userEmail, {
+          await sendBookingConfirmationEmail({
             date: dateString(parseInt(selectedDay || 0)),
             start: selectedStart || 0,
             end: selectedEnd || 1,

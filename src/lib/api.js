@@ -1,3 +1,15 @@
+
+// Simple cookie utility functions
+const getCookie = (name) => {
+  if (typeof document === 'undefined') return null
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) return parts.pop().split(';').shift()
+  return null
+}
+
+// Helper function to handle 401 errors and refresh tokens
+
 // Helper function to handle 401 errors and refresh tokens
 async function handleResponse(response) {
   if (response.status === 401) {
@@ -39,57 +51,10 @@ async function refreshAccessToken() {
 
 
 
-// JWT token utility functions
-const isTokenExpired = (token) => {
-  try {
-    if (!token) return true;
-    
-    // Decode JWT token (without verification since we don't have the secret on frontend)
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    
-    const payload = JSON.parse(jsonPayload);
-    const currentTime = Math.floor(Date.now() / 1000);
-    
-    return payload.exp < currentTime;
-  } catch (error) {
-    console.error('Error checking token expiration:', error);
-    return true;
-  }
-};
 
-const checkAuthStatus = () => {
-  const authToken = getCookie('auth');
-  const refreshToken = getCookie('refresh');
-  
-  // If no tokens at all, user is not authenticated
-  if (!authToken && !refreshToken) {
-    return false;
-  }
-  
-  // If we have a valid access token, user is authenticated
-  if (authToken && !isTokenExpired(authToken)) {
-    return true;
-  }
-  
-  // If access token is expired but we have refresh token, let API handle refresh
-  if (refreshToken) {
-    return true; // API will handle token refresh automatically
-  }
-  
-  // No valid tokens, clear cookies and return false
-  if (typeof document !== 'undefined') {
-    document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    document.cookie = 'refresh=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-  }
-  return false;
-};
 
 // Email utility functions using Nodemailer
-export async function sendBookingConfirmationEmail(userEmail, bookingDetails) {
+export async function sendBookingConfirmationEmail( bookingDetails) {
   try {
     // Get current theme from cookies
     const themeColor = getCookie('theme-color') || 'color-theme-blue'
@@ -101,9 +66,9 @@ export async function sendBookingConfirmationEmail(userEmail, bookingDetails) {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify({
         type: 'booking-confirmation',
-        userEmail,
         bookingDetails,
         themeColor,
         isDarkMode
@@ -300,10 +265,7 @@ export async function registerBooking(date, start, end, people, description = ""
 
 export async function accountInfo() {
   try {
-    // Check if we have any authentication tokens
-    // if (typeof window !== 'undefined' && !checkAuthStatus()) {
-    //   return { code: 'UNAUTHORIZED', msg: null };
-    // }
+    
 
     const response = await fetch('/api/client', {
       method: 'GET',
