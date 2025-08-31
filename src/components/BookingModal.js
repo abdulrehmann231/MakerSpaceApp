@@ -145,10 +145,6 @@ export default function BookingModal() {
             }
           }
 
-          console.log(selectedDay, 'selectedDay');
-          console.log(selectedStart, 'selectedStart');
-          console.log(selectedEnd, 'selectedEnd');
-          console.log(npeople, 'npeople');
           
           await sendBookingConfirmationEmail(userEmail, {
             date: dateString(parseInt(selectedDay || 0)),

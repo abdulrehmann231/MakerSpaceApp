@@ -5,7 +5,7 @@ import { getAllBookings } from "../../../lib/backend/db";
 export async function GET() {
   try {
     const { Items: bookings } = await getAllBookings("bookings");
-    console.log(bookings);
+    
 
     // Build ICS events exactly like the original Lambda implementation
     const events = [];
@@ -41,11 +41,11 @@ export async function GET() {
       });
     }
 
-    console.log(events, "events");
+    
 
     const { error, value } = createEvents(events);
     if (error) {
-      console.log(error);
+    
       return new NextResponse("Failed to generate calendar", { status: 500 });
     }
 

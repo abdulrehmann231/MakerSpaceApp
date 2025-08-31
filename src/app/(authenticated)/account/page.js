@@ -67,7 +67,7 @@ export default function AccountPage() {
         showphone
       }
       await setUserData(email, userData)
-      console.log('Profile saved successfully')
+      
     } catch (error) {
       console.error('Error saving profile:', error)
     }

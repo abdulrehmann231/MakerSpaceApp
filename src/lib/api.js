@@ -1,22 +1,92 @@
-// Helper function to handle 401 errors (like original readResponse)
-function handleResponse(response) {
+// Helper function to handle 401 errors and refresh tokens
+async function handleResponse(response) {
   if (response.status === 401) {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+    // Try to refresh the access token
+    const refreshResult = await refreshAccessToken();
+    if (refreshResult) {
+      // Refresh successful, but we can't retry the original request here
+      // The calling function should handle this case
+      return false; // Signal that refresh happened but request needs to be retried
+    } else {
+      // Refresh failed, clear cookies
+      if (typeof window !== 'undefined') {
+        document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'refresh=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      }
+      return false;
     }
-    return false;
   }
   return response.json();
 }
 
-// Simple cookie utility functions
-const getCookie = (name) => {
-  if (typeof document === 'undefined') return null
-  const value = `; ${document.cookie}`
-  const parts = value.split(`; ${name}=`)
-  if (parts.length === 2) return parts.pop().split(';').shift()
-  return null
+// Function to refresh access token
+async function refreshAccessToken() {
+  try {
+    const response = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      credentials: 'include'
+    });
+    
+    if (response.ok) {
+      return true; // Refresh successful
+    }
+    return false; // Refresh failed
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    return false;
+  }
 }
+
+
+
+// JWT token utility functions
+const isTokenExpired = (token) => {
+  try {
+    if (!token) return true;
+    
+    // Decode JWT token (without verification since we don't have the secret on frontend)
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    
+    const payload = JSON.parse(jsonPayload);
+    const currentTime = Math.floor(Date.now() / 1000);
+    
+    return payload.exp < currentTime;
+  } catch (error) {
+    console.error('Error checking token expiration:', error);
+    return true;
+  }
+};
+
+const checkAuthStatus = () => {
+  const authToken = getCookie('auth');
+  const refreshToken = getCookie('refresh');
+  
+  // If no tokens at all, user is not authenticated
+  if (!authToken && !refreshToken) {
+    return false;
+  }
+  
+  // If we have a valid access token, user is authenticated
+  if (authToken && !isTokenExpired(authToken)) {
+    return true;
+  }
+  
+  // If access token is expired but we have refresh token, let API handle refresh
+  if (refreshToken) {
+    return true; // API will handle token refresh automatically
+  }
+  
+  // No valid tokens, clear cookies and return false
+  if (typeof document !== 'undefined') {
+    document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'refresh=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  }
+  return false;
+};
 
 // Email utility functions using Nodemailer
 export async function sendBookingConfirmationEmail(userEmail, bookingDetails) {
@@ -230,6 +300,11 @@ export async function registerBooking(date, start, end, people, description = ""
 
 export async function accountInfo() {
   try {
+    // Check if we have any authentication tokens
+    // if (typeof window !== 'undefined' && !checkAuthStatus()) {
+    //   return { code: 'UNAUTHORIZED', msg: null };
+    // }
+
     const response = await fetch('/api/client', {
       method: 'GET',
       headers: {
@@ -239,7 +314,7 @@ export async function accountInfo() {
     });
 
     const data = await handleResponse(response);
-    if (data === false) return { code: 'ERROR', msg: null }; // 401 error handled
+    if (data === false) return { code: 'UNAUTHORIZED', msg: null }; // 401 error handled
     return data; // Return the full response object
   } catch (error) {
     console.error('Account info error:', error);

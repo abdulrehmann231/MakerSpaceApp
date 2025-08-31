@@ -12,14 +12,20 @@ export default function AuthenticatedLayout({ children }) {
   
   useEffect(() => {
     accountInfo().then((data) => {
+      
       if (data && data.code === 'FOUND' && data.msg && data.msg.firstname) {
         setFirstname(data.msg.firstname)
+      }
+      else if (data && data.code === 'UNAUTHORIZED') {
+        // Token expired or invalid, redirect to login
+        router.push('/login')
       }
       else{
         router.push('/login')
       }
     }).catch((error) => {
-      console.error('Error loading account info in layout:', error)
+      
+      router.push('/login')
     })
   }, [])
 

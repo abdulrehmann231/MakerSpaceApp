@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createBooking, seeBookings, cancelBooking } from '../../../lib/backend/routes';
+import { extractUser } from '../../../lib/backend/middleware';
 
 export async function GET(request) {
   try {
@@ -7,11 +8,26 @@ export async function GET(request) {
     const from = searchParams.get('from');
     const to = searchParams.get('to');
     const see = searchParams.get('see');
+    
 
-    // Call the migrated seeBookings function
+    // Extract user from JWT token
+    const user = await extractUser(request.headers, 'users');
+    
+    
+    if (!user) {
+      return NextResponse.json(
+        { code: 'UNAUTHORIZED', msg: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    
     const result = await seeBookings('users', 'bookings', 'settings', {
       queryStringParameters: { from, to, see },
-      headers: { cookie: request.headers.get('cookie') }
+      headers: { 
+        cookie: request.headers.get('cookie'),
+        user: user // Pass user object directly
+      }
     });
 
     // Handle the response
@@ -35,6 +51,16 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const { date, start, end, npeople, description } = body;
+
+    // Extract user from JWT token
+    const user = await extractUser(request.headers, 'users');
+    
+    if (!user) {
+      return NextResponse.json(
+        { code: 'UNAUTHORIZED', msg: 'Authentication required' },
+        { status: 401 }
+      );
+    }
 
     // Call the migrated createBooking function
     const result = await createBooking('users', 'bookings', {
@@ -93,6 +119,16 @@ export async function DELETE(request) {
   try {
     const body = await request.json();
     const { id } = body;
+
+    // Extract user from JWT token
+    const user = await extractUser(request.headers, 'users');
+    
+    if (!user) {
+      return NextResponse.json(
+        { code: 'UNAUTHORIZED', msg: 'Authentication required' },
+        { status: 401 }
+      );
+    }
 
     // Call the migrated cancelBooking function
     const result = await cancelBooking('users', 'bookings', {

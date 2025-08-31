@@ -25,7 +25,7 @@ export default function Sidebar({ firstname = "User" }) {
   // Handle click outside sidebar
   useEffect(() => {
     const handleClickOutside = (event) => {
-      console.log('handleClickOutside', isOpen)
+      
       // Check if sidebar is open
       if (document.body.classList.contains('menu-left-open')) {
         // Check if click is outside sidebar and not on sidebar elements
