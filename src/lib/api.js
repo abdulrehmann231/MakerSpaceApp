@@ -1,4 +1,5 @@
 
+
 // Simple cookie utility functions
 const getCookie = (name) => {
   if (typeof document === 'undefined') return null
@@ -9,16 +10,23 @@ const getCookie = (name) => {
 }
 
 // Helper function to handle 401 errors and refresh tokens
-
-// Helper function to handle 401 errors and refresh tokens
-async function handleResponse(response) {
-  if (response.status === 401) {
+async function handleResponse(response, retryFunction = null) {
+  if (response.status === 401 || response.code === 'UNAUTHORIZED') {
     // Try to refresh the access token
     const refreshResult = await refreshAccessToken();
     if (refreshResult) {
-      // Refresh successful, but we can't retry the original request here
-      // The calling function should handle this case
-      return false; // Signal that refresh happened but request needs to be retried
+      // Refresh successful, retry the original request if retry function provided
+      if (retryFunction) {
+        console.log('retry function')
+        const retryResponse = await retryFunction();
+        // If retry response is successful, parse and return the JSON
+        if (retryResponse.ok) {
+          return await retryResponse.json();
+        } else {
+          return false;
+        }
+      }
+      return false; 
     } else {
       // Refresh failed, clear cookies
       if (typeof window !== 'undefined') {
@@ -121,16 +129,21 @@ export async function sendWelcomeEmail(userEmail, firstName) {
 // API functions for Next.js backend
 export async function signin(email, password) {
   try {
-    const response = await fetch('/api/auth/signin', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email, password })
-    });
+    const makeRequest = async () => {
+      const response = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password })
+      });
+      return response;
+    };
 
-    const data = await handleResponse(response);
+    const response = await makeRequest();
+
+    const data = await handleResponse(response, makeRequest);
     if (data === false) return false; // 401 error handled
     return data.code === 'LOGIN' || data.code === 'PWCHANGE';
   } catch (error) {
@@ -157,16 +170,20 @@ export async function signout() {
 
 export async function register(email, password, firstname, lastname) {
   try {
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email, password, firstname, lastname })
-    });
+    const makeRequest = async () => {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password, firstname, lastname })
+      });
+      return response;
+    };
 
-    const data = await handleResponse(response);
+    const response = await makeRequest();
+    const data = await handleResponse(response, makeRequest);
     if (data === false) return false; // 401 error handled
     return data.code === 'REG';
   } catch (error) {
@@ -177,16 +194,20 @@ export async function register(email, password, firstname, lastname) {
 
 export async function getAvailability(from, to) {
   try {
-    const response = await fetch(`/api/bookings?from=${from}&to=${to}&see=true`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include'
-    });
+    const makeRequest = async () => {
+      const response = await fetch(`/api/bookings?from=${from}&to=${to}&see=true`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+      return response;
+    };
 
-    const data = await handleResponse(response);
-    if (data === false) return []; // 401 error handled
+    const response = await makeRequest();
+    const data = await handleResponse(response, makeRequest);
+    if (data === false) return false; // 401 error handled
     return data.code === 'FOUND' ? data.msg : [];
   } catch (error) {
     console.error('Get availability error:', error);
@@ -199,15 +220,19 @@ export async function bookings() {
     const from = new Date().toISOString().split('T')[0];
     const to = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    const response = await fetch(`/api/bookings?from=${from}&to=${to}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include'
-    });
+    const makeRequest = async () => {
+      const response = await fetch(`/api/bookings?from=${from}&to=${to}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+      return response;
+    };
 
-    const data = await handleResponse(response);
+    const response = await makeRequest();
+    const data = await handleResponse(response, makeRequest);
     if (data === false) return { code: 'ERROR', msg: [] }; // 401 error handled
     return data; // Return the full response object
   } catch (error) {
@@ -218,16 +243,20 @@ export async function bookings() {
 
 export async function cancelBooking(id) {
   try {
-    const response = await fetch('/api/bookings', {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ id })
-    });
+    const makeRequest = async () => {
+      const response = await fetch('/api/bookings', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ id })
+      });
+      return response;
+    };
 
-    const data = await handleResponse(response);
+    const response = await makeRequest();
+    const data = await handleResponse(response, makeRequest);
     if (data === false) return false; // 401 error handled
     return data.code === 'DELETE';
   } catch (error) {
@@ -238,16 +267,20 @@ export async function cancelBooking(id) {
 
 export async function registerBooking(date, start, end, people, description = "") {
   try {
-    const response = await fetch('/api/bookings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ date, start, end, npeople: people, description })
-    });
+    const makeRequest = async () => {
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ date, start, end, npeople: people, description })
+      });
+      return response;
+    };
 
-    const data = await handleResponse(response);
+    const response = await makeRequest();
+    const data = await handleResponse(response, makeRequest);
     if (data === false) return false; // 401 error handled
     
     // Check if the response indicates success
@@ -265,17 +298,21 @@ export async function registerBooking(date, start, end, people, description = ""
 
 export async function accountInfo() {
   try {
-    
+    const makeRequest = async () => {
+      const response = await fetch('/api/client', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+      return response;
+    };
 
-    const response = await fetch('/api/client', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include'
-    });
+    const response = await makeRequest();
 
-    const data = await handleResponse(response);
+    const data = await handleResponse(response, makeRequest);
+
     if (data === false) return { code: 'UNAUTHORIZED', msg: null }; // 401 error handled
     return data; // Return the full response object
   } catch (error) {
@@ -286,16 +323,20 @@ export async function accountInfo() {
 
 export async function setUserData(email, userData) {
   try {
-    const response = await fetch('/api/client', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email, userdata: userData, update: true })
-    });
+    const makeRequest = async () => {
+      const response = await fetch('/api/client', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, userdata: userData, update: true })
+      });
+      return response;
+    };
 
-    const data = await handleResponse(response);
+    const response = await makeRequest();
+    const data = await handleResponse(response, makeRequest);
     if (data === false) return false; // 401 error handled
     return data.code === 'UPDATE';
   } catch (error) {

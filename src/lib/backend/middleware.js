@@ -22,9 +22,9 @@ export const extractUser = async (headers, collectionName) => {
     const decodedToken = verifyAccessToken(ckies.auth);
     if (!decodedToken) {
       // Access token expired, try refresh token
-      if (ckies.refresh) {
-        return await refreshUserSession(ckies.refresh, collectionName);
-      }
+      // if (ckies.refresh) {
+      //   return await refreshUserSession(ckies.refresh, collectionName);
+      // }
       return null;
     }
     

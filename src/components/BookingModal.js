@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { getAvailability, formatDate, dateString, registerBooking, sendBookingConfirmationEmail } from '@/lib/api'
-
+import { useRouter } from 'next/navigation'
 export default function BookingModal() {
   const [availableBookings, setAvailableBookings] = useState(null)
   const [selectedDayBookings, setSelectedDayBookings] = useState([])
@@ -12,7 +12,7 @@ export default function BookingModal() {
   const [selectedDay, setSelectedDay] = useState(0)
   const [selectedStart, setSelectedStart] = useState(0)
   const [selectedEnd, setSelectedEnd] = useState(1)
-
+  const router = useRouter()
   useEffect(() => {
     reload()
   }, [])
@@ -44,6 +44,9 @@ export default function BookingModal() {
         setSelectedStart(parseInt(firstStart))
         setSelectedEnd(parseInt(firstEnd))
         updateMenus(convertedBookingsData, parseInt(firstDay), parseInt(firstStart), parseInt(firstEnd), npeople)
+      }
+      else{
+        router.push('/login')
       }
     } catch (error) {
       console.error('Error loading availability:', error)
@@ -158,7 +161,8 @@ export default function BookingModal() {
         }
       } else {
         // Show error message to user
-        alert('Failed to create booking. Please try again.')
+        console.log('Failed to create booking. Please try again.')
+        router.push('/login')
       }
     } catch (error) {
       console.error('Error creating booking:', error)
