@@ -9,9 +9,11 @@ export default function BookingModal() {
   const [disabledStartTimes, setDisabledStartTimes] = useState([])
   const [disabledEndTimes, setDisabledEndTimes] = useState([])
   const [npeople, setNpeople] = useState(1)
+  const [description, setDescription] = useState("")
   const [selectedDay, setSelectedDay] = useState(0)
   const [selectedStart, setSelectedStart] = useState(0)
   const [selectedEnd, setSelectedEnd] = useState(1)
+  const [maxPeople, setMaxPeople] = useState(5)
   const router = useRouter()
   useEffect(() => {
     reload()
@@ -96,13 +98,25 @@ export default function BookingModal() {
       newSelectedEnd = newDisabledEndTimes.findIndex((a) => a === false) + 1
     }
 
+    // compute max people available for the selected range (min capacity across hours)
+    const rangeMin = Math.max(0, newSelectedEnd - newSelectedStart) > 0
+      ? Array.from({length: newSelectedEnd - newSelectedStart}).reduce((min, _, idx) => {
+          const hour = newSelectedStart + idx
+          const cap = parseInt(dayBookingsArray[hour]) || 0
+          return idx === 0 ? cap : Math.min(min, cap)
+        }, 0)
+      : 0
+
+    const adjustedPeople = Math.max(1, Math.min(selectedPeople, Math.max(rangeMin, 1)))
+
     setSelectedDayBookings(dayBookingsArray)
     setDisabledStartTimes(newDisabledStartTimes)
     setDisabledEndTimes(newDisabledEndTimes)
     setSelectedStart(newSelectedStart)
     setSelectedEnd(newSelectedEnd)
     setSelectedDay(selectedDayValue)
-    setNpeople(selectedPeople)
+    setNpeople(adjustedPeople)
+    setMaxPeople(Math.max(rangeMin, 1))
   }
 
   const updatePeople = (e) => {
@@ -124,13 +138,30 @@ export default function BookingModal() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-
+      // Validate
+      const start = selectedStart || 0
+      const end = selectedEnd || 1
+      if (start >= end) {
+        alert('Please ensure "Starting from" is before "Until".')
+        return
+      }
+      const people = npeople || 1
+      // ensure people do not exceed min capacity across selected range
+      const minCapacity = Array.from({length: end - start}).reduce((min, _, idx) => {
+        const cap = parseInt(selectedDayBookings[start + idx]) || 0
+        return idx === 0 ? cap : Math.min(min, cap)
+      }, 0)
+      if (people > minCapacity) {
+        alert(`Selected people exceed available capacity (${minCapacity}) for this time range.`)
+        return
+      }
       
       const success = await registerBooking(
         dateString(parseInt(selectedDay || 0)), 
-        selectedStart || 0, 
-        selectedEnd || 1, 
-        npeople || 1
+        start, 
+        end, 
+        people,
+        description || ""
       )
       
       if (success) {
@@ -215,7 +246,7 @@ export default function BookingModal() {
                       value={npeople || 1} 
                       onChange={updatePeople}
                     >
-                      {Array.from(Array(5), (e, i) => (
+                      {Array.from(Array(Math.min(10, maxPeople)), (e, i) => (
                         <option key={i + 1} value={i + 1}>{i + 1}</option>
                       ))}
                     </select>
@@ -286,10 +317,11 @@ export default function BookingModal() {
                     <label>Give Description</label>
                     <textarea 
                       name="description" 
-                      disabled={true} 
                       id="description" 
                       className="form-control" 
                       placeholder="Write Brief Description"
+                      value={description}
+                      onChange={(e)=>setDescription(e.target.value)}
                     />
                   </div>
 

@@ -43,15 +43,14 @@ export default function AccountPage() {
             setShowemail(info.userData.showemail || false)
             setShowphone(info.userData.showphone || false)
           }
-          else{
-            
-            router.push('/login')
-          }
+          
         }
         else if (data && data.code === "UNAUTHORIZED" ) {
+          console.log('Unauthorized in get account info, redirecting to login')
           router.push('/login')
         }
         else{
+          console.log('Error in get account info, redirecting to login')
           router.push('/login')
         }
       } catch (error) {

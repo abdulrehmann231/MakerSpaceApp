@@ -57,7 +57,8 @@ export default function BookingsPage() {
     
     try {
       const data = await cancelBooking(bookingId)
-      if (data && data.code === "DELETE") {
+      
+      if (data ) {
       // Reload bookings after cancellation
       setTimeout(async () => {
         try {
@@ -74,6 +75,7 @@ export default function BookingsPage() {
       }, 500)
     }
     else{
+      console.log('Failed to cancel booking, redirecting to login')
       router.push('/login')
     }
     } catch (error) {
@@ -96,6 +98,11 @@ export default function BookingsPage() {
             <div className="media-body">
               <h5>{formatDate(new Date(bookingTime))}</h5>
               <p className="mb-0">{booking.start}-{booking.end}</p>
+              {booking.description && (
+                <p className="mt-1 text-muted mb-0" style={{whiteSpace: 'pre-wrap'}}>
+                  {booking.description}
+                </p>
+              )}
               <h2 className="title-number-carousel color-primary">
                 <span className="text-primary">{booking.npeople}</span>
                 <small> people</small>

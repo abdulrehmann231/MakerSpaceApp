@@ -23,13 +23,15 @@ export default function AuthenticatedLayout({ children }) {
       }
       else if (data && data.code === 'UNAUTHORIZED') {
         // Token expired or invalid, redirect to login
+        console.log('Token expired or invalid, redirecting to login')
         router.push('/login')
       }
       else{
+        console.log('No account info found, redirecting to login')
         router.push('/login')
       }
     }).catch((error) => {
-      
+      console.log('Error loading account info:', error)
       router.push('/login')
     })
   }, [])
