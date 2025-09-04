@@ -312,6 +312,7 @@ export async function accountInfo() {
     const response = await makeRequest();
 
     const data = await handleResponse(response, makeRequest);
+    console.log('Account info data received:', data);
 
     if (data === false) return { code: 'UNAUTHORIZED', msg: null }; // 401 error handled
     return data; // Return the full response object

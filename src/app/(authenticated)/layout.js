@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 
 export default function AuthenticatedLayout({ children }) {
   const [firstname, setFirstname] = useState("User")
+  const [userRole, setUserRole] = useState("user")
   const router = useRouter()
   
   useEffect(() => {
@@ -15,6 +16,10 @@ export default function AuthenticatedLayout({ children }) {
       
       if (data && data.code === 'FOUND' && data.msg && data.msg.firstname) {
         setFirstname(data.msg.firstname)
+        // Set user role from the user document
+        const role = data.msg.user || "user"
+        console.log('User role detected:', role)
+        setUserRole(role)
       }
       else if (data && data.code === 'UNAUTHORIZED') {
         // Token expired or invalid, redirect to login
@@ -31,7 +36,7 @@ export default function AuthenticatedLayout({ children }) {
 
   return (
     <>
-      <Sidebar firstname={firstname} />
+      <Sidebar firstname={firstname} userRole={userRole} />
       <Page>
         {children}
       </Page>
