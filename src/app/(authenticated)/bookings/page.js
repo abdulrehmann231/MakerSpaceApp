@@ -2,19 +2,24 @@
 
 import { useState, useEffect } from 'react'
 import { bookings, cancelBooking, accountInfo, formatDate } from '@/lib/api'
-
+import { useRouter } from 'next/navigation'
 export default function BookingsPage() {
   const [bookingsData, setBookingsData] = useState([])
   const [firstname, setFirstname] = useState("")
-
+  const router = useRouter()
   useEffect(() => {
     // Load bookings data
     const loadBookings = async () => {
       try {
         const data = await bookings()
-        if (data && data.code === "FOUND") {
+        if (data && data.code === "FOUND") { 
           setBookingsData(data.msg || [])
-        } else {
+        } else if (data && data.code === "UNAUTHORIZED" || data && data.code === "ERROR") {
+          router.push('/login')
+          setBookingsData([])
+        }
+        else{
+          console.log('No bookings found or other error')
           setBookingsData([])
         }
       } catch (error) {
@@ -30,6 +35,13 @@ export default function BookingsPage() {
         if (data && data.msg) {
           setFirstname(data.msg.firstname || "")
         }
+        else if (data && data.code === "UNAUTHORIZED" || data && data.code === "ERROR") {
+          router.push('/login')
+          setFirstname("")
+        }
+        else{
+          setFirstname("")
+        }
       } catch (error) {
         console.error('Error loading account info:', error)
       }
@@ -44,18 +56,26 @@ export default function BookingsPage() {
     const bookingId = parseInt(e.target.dataset.id)
     
     try {
-      await cancelBooking(bookingId)
+      const data = await cancelBooking(bookingId)
+      if (data && data.code === "DELETE") {
       // Reload bookings after cancellation
       setTimeout(async () => {
         try {
           const data = await bookings()
           if (data && data.code === "FOUND") {
-            setBookingsData(data.msg || [])
+             setBookingsData(data.msg || [])
+          }
+          else{
+            setBookingsData([])
           }
         } catch (error) {
           console.error('Error reloading bookings:', error)
         }
       }, 500)
+    }
+    else{
+      router.push('/login')
+    }
     } catch (error) {
       console.error('Error cancelling booking:', error)
     }

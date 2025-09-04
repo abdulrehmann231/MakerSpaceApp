@@ -37,15 +37,41 @@ export const getUser = async (username, collectionName) => {
     }
 };
 
-export const updateToken = async (username, collectionName, tokenValue) => {
+// Refresh token management functions
+export const saveRefreshToken = async (email, refreshToken, collectionName) => {
     try {
         const collection = await getCollection(collectionName);
         const result = await collection.updateOne(
-            { key: username },
-            { $set: { token: tokenValue } },
+            { key: email },
+            { $set: { refreshToken: refreshToken } },
             { returnDocument: 'after' }
         );
-        return tokenValue;
+        return result;
+    } catch (err) {
+        console.log(err);
+        return null;
+    }
+};
+
+export const getRefreshToken = async (email, collectionName) => {
+    try {
+        const collection = await getCollection(collectionName);
+        const user = await collection.findOne({ key: email });
+        return user ? user.refreshToken : null;
+    } catch (err) {
+        console.log(err, err.stack);
+        return null;
+    }
+};
+
+export const deleteRefreshToken = async (email, collectionName) => {
+    try {
+        const collection = await getCollection(collectionName);
+        const result = await collection.updateOne(
+            { key: email },
+            { $unset: { refreshToken: "" } }
+        );
+        return result;
     } catch (err) {
         console.log(err);
         return null;

@@ -13,7 +13,7 @@ export function useSidebar() {
   }, []) // Remove document from dependencies
 
   const openSidebar = () => {
-    console.log('openSidebar')
+    
     
     if (typeof document !== 'undefined') {
       document.body.classList.add('menu-left-open')
@@ -22,7 +22,6 @@ export function useSidebar() {
   }
 
   const closeSidebar = () => {
-    console.log('closeSidebar')
     
     if (typeof document !== 'undefined') {
       document.body.classList.remove('menu-left-open')

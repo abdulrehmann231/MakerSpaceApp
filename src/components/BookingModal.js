@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { getAvailability, formatDate, dateString, registerBooking, sendBookingConfirmationEmail } from '@/lib/api'
-
+import { useRouter } from 'next/navigation'
 export default function BookingModal() {
   const [availableBookings, setAvailableBookings] = useState(null)
   const [selectedDayBookings, setSelectedDayBookings] = useState([])
@@ -12,7 +12,7 @@ export default function BookingModal() {
   const [selectedDay, setSelectedDay] = useState(0)
   const [selectedStart, setSelectedStart] = useState(0)
   const [selectedEnd, setSelectedEnd] = useState(1)
-
+  const router = useRouter()
   useEffect(() => {
     reload()
   }, [])
@@ -44,6 +44,9 @@ export default function BookingModal() {
         setSelectedStart(parseInt(firstStart))
         setSelectedEnd(parseInt(firstEnd))
         updateMenus(convertedBookingsData, parseInt(firstDay), parseInt(firstStart), parseInt(firstEnd), npeople)
+      }
+      else{
+        router.push('/login')
       }
     } catch (error) {
       console.error('Error loading availability:', error)
@@ -133,24 +136,7 @@ export default function BookingModal() {
       if (success) {
         // Send booking confirmation email
         try {
-          // Get user email from cookies or localStorage
-          let userEmail = 'user@example.com' // Default fallback
-          
-          // Try to get from cookies
-          if (typeof document !== 'undefined') {
-            const cookies = document.cookie.split(';')
-            const userCookie = cookies.find(c => c.trim().startsWith('user='))
-            if (userCookie) {
-              userEmail = decodeURIComponent(userCookie.split('=')[1])
-            }
-          }
-
-          console.log(selectedDay, 'selectedDay');
-          console.log(selectedStart, 'selectedStart');
-          console.log(selectedEnd, 'selectedEnd');
-          console.log(npeople, 'npeople');
-          
-          await sendBookingConfirmationEmail(userEmail, {
+          await sendBookingConfirmationEmail({
             date: dateString(parseInt(selectedDay || 0)),
             start: selectedStart || 0,
             end: selectedEnd || 1,
@@ -175,7 +161,8 @@ export default function BookingModal() {
         }
       } else {
         // Show error message to user
-        alert('Failed to create booking. Please try again.')
+        console.log('Failed to create booking. Please try again.')
+        router.push('/login')
       }
     } catch (error) {
       console.error('Error creating booking:', error)

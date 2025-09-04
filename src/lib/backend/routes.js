@@ -1,5 +1,6 @@
 import { generateString, hashPassword, parseCookies } from './encrypt.js';
-import { getUser, updateToken, register, getUserData, setUserData, putBooking, getBookings, getAllBookings, deleteBooking, getAvailability, getSetting, changePassword } from './db.js';
+import { generateTokens, verifyAccessToken, verifyRefreshToken } from './jwt.js';
+import { getUser, register, getUserData, setUserData, putBooking, getBookings, getAllBookings, deleteBooking, getAvailability, getSetting, changePassword, saveRefreshToken, getRefreshToken, deleteRefreshToken } from './db.js';
 
 const response = (content = {}, statusCode = '200') => ({
     "isBase64Encoded": false,
@@ -21,9 +22,15 @@ export const postClient = async (collectionName, { body, headers }) => {
 
     if (update) {
         const ckies = headers.cookie && parseCookies(headers.cookie);
-        if (ckies && ckies.auth && ckies.user) {
-            const decodedEmail = decodeURIComponent(ckies.user);
-            const user = await getUser(decodedEmail, collectionName);
+        if (ckies && ckies.auth) {
+            // Verify JWT token
+            const decodedToken = verifyAccessToken(ckies.auth);
+            if (!decodedToken) {
+                return response({ msg: 'Authentication failed', code: 'UNAUTHORIZED' });
+            }
+            
+            // Get user from database using email from JWT
+            const user = await getUser(decodedToken.email, collectionName);
             if (user && user.key == email) {
                 const res = await setUserData(email, collectionName, userdata);
                 const respons = response({
@@ -34,10 +41,14 @@ export const postClient = async (collectionName, { body, headers }) => {
             }
             return response({ msg: 'Incorrect Username' + user?.key + '/' + email, code: 'WRONGUSER' });
         }
-        return response({ msg: 'Incorrect Password', code: 'WRONGPW' });
+        return response({ msg: 'Authentication required', code: 'UNAUTHORIZED' });
     } else if (!createaccount && user && hashPassword(email, password, user.salt).hash === user.hash) {
         // Login successful
-        const token = await updateToken(email, collectionName, generateString(36));
+        const { accessToken, refreshToken } = generateTokens(user);
+        
+        // Save refresh token to database
+        await saveRefreshToken(email, refreshToken, collectionName);
+        
         const res = newpassword ? await changePassword(email, newpassword, collectionName, pHash) : null;
         const respons = response({
             msg: `Successfully ${res ? "Changed Password" : "Logged in"}`,
@@ -45,21 +56,27 @@ export const postClient = async (collectionName, { body, headers }) => {
         }, '200');
         respons.multiValueHeaders = {
             'Set-Cookie': [
-                `user=${email}`,
-                `auth=${token}; Secure; HttpOnly`
+                `auth=${accessToken}; Secure; HttpOnly; SameSite=Lax`,
+                `refresh=${refreshToken}; Secure; HttpOnly; SameSite=Lax`
             ]
         };
         return respons;
     } else if (createaccount) {
         // Registration
         const res = !user && await register(body, collectionName, pHash);
-        const token = await updateToken(email, collectionName, generateString(36));
         if (!user) {
+            // Get the newly created user to generate JWT tokens
+            const newUser = await getUser(email, collectionName);
+            const { accessToken, refreshToken } = generateTokens(newUser);
+            
+            // Save refresh token to database
+            await saveRefreshToken(email, refreshToken, collectionName);
+            
             const respons = response({ msg: 'Successfully Registered', code: 'REG' }, '302');
             respons.multiValueHeaders = {
                 'Set-Cookie': [
-                    `user=${email};`,
-                    `auth=${token}; Secure; HttpOnly`
+                    `auth=${accessToken}; Secure; HttpOnly; SameSite=Lax`,
+                    `refresh=${refreshToken}; Secure; HttpOnly; SameSite=Lax`
                 ]
             };
             return respons;
@@ -79,13 +96,57 @@ export const getClient = async (collectionName, { headers }) => {
 const requireAuth = async (headers, collectionName, f) => {
     const ckies = headers.cookie && parseCookies(headers.cookie);
     
-    if (ckies && ckies.auth && ckies.user) {
-        // Decode the email in case it's URL encoded
-        const decodedEmail = decodeURIComponent(ckies.user);
-        const user = await getUser(decodedEmail, collectionName);
-        return user && user.token === ckies.auth ? await f(user) : authFailed();
+    if (ckies && ckies.auth) {
+        // Verify JWT token
+        const decodedToken = verifyAccessToken(ckies.auth);
+        if (!decodedToken) {
+            // Access token expired, try refresh token
+            if (ckies.refresh) {
+                const user = await refreshUserSession(ckies.refresh, collectionName);
+                if (user) {
+                    return await f(user);
+                }
+            }
+            return authFailed();
+        }
+        
+        // Get user from database using email from JWT
+        const user = await getUser(decodedToken.email, collectionName);
+        if (!user) {
+            return authFailed();
+        }
+        
+        return await f(user);
     }
     return authFailed();
+};
+
+// Helper function to refresh user session
+const refreshUserSession = async (refreshToken, collectionName) => {
+    try {
+        // Verify refresh token
+        const decodedRefreshToken = verifyRefreshToken(refreshToken);
+        if (!decodedRefreshToken) {
+            return null;
+        }
+        
+        // Get stored refresh token from database
+        const storedRefreshToken = await getRefreshToken(decodedRefreshToken.email, collectionName);
+        if (!storedRefreshToken || storedRefreshToken !== refreshToken) {
+            return null;
+        }
+        
+        // Get user from database
+        const user = await getUser(decodedRefreshToken.email, collectionName);
+        if (!user) {
+            return null;
+        }
+        
+        return user;
+    } catch (error) {
+        console.error('Error refreshing user session:', error);
+        return null;
+    }
 };
 
 const authFailed = () => { return response({}, '401'); };
@@ -106,10 +167,39 @@ export const createBooking = async (userCollection, timeCollection, { body, head
     // Check if all required fields are present and valid
     if (date && typeof start === 'number' && !isNaN(start) && typeof end === 'number' && !isNaN(end)) {
         const ckies = headers.cookie && parseCookies(headers.cookie);
-        const decodedEmail = ckies && ckies.user ? decodeURIComponent(ckies.user) : null;
-        const user = ckies && ckies.auth && decodedEmail && await getUser(decodedEmail, userCollection);
+        
+        if (!ckies || !ckies.auth) {
+            return authFailed();
+        }
+        
+        // Verify JWT token
+        const decodedToken = verifyAccessToken(ckies.auth);
+        if (!decodedToken) {
+            // Access token expired, try refresh token
+            if (ckies.refresh) {
+                const user = await refreshUserSession(ckies.refresh, userCollection);
+                if (user) {
+                    const bookingId = (new Date()).valueOf() - (new Date(2020, 1, 1)).valueOf();
+                    const record = { 
+                        date, 
+                        start, 
+                        end, 
+                        id: bookingId, 
+                        user: user.key, 
+                        npeople,
+                        description: body.description || ''
+                    };
+                    const res = await putBooking(timeCollection, record);
+                    return response({ msg: "Successfully Booked", code: "BOOKED" }, "200");
+                }
+            }
+            return authFailed();
+        }
+        
+        // Get user from database using email from JWT
+        const user = await getUser(decodedToken.email, userCollection);
         const bookingId = (new Date()).valueOf() - (new Date(2020, 1, 1)).valueOf();
-        if (user && user.token === ckies.auth) {
+        if (user) {
             const record = { 
                 date, 
                 start, 
@@ -148,6 +238,7 @@ export const createBooking = async (userCollection, timeCollection, { body, head
 export const seeBookings = async (userCollection, timeCollection, configCollection, { queryStringParameters: { from, to, see }, headers }) => {
     return requireAuth(headers, userCollection, async (user) => {
         if (see) {
+            
             const config = await getSetting("availability", configCollection);
             const bookings = await getAvailability(from, to, timeCollection);
             var available = [];
@@ -182,9 +273,28 @@ export const seeBookings = async (userCollection, timeCollection, configCollecti
 
 export const cancelBooking = async (userCollection, timeCollection, { body: { id }, headers }) => {
     const ckies = headers.cookie && parseCookies(headers.cookie);
-    const decodedEmail = ckies && ckies.user ? decodeURIComponent(ckies.user) : null;
-    const user = ckies && ckies.auth && decodedEmail && await getUser(decodedEmail, userCollection);
-    if (user && user.token === ckies.auth) {
+    
+    if (!ckies || !ckies.auth) {
+        return authFailed();
+    }
+    
+    // Verify JWT token
+    const decodedToken = verifyAccessToken(ckies.auth);
+    if (!decodedToken) {
+        // Access token expired, try refresh token
+        if (ckies.refresh) {
+            const user = await refreshUserSession(ckies.refresh, userCollection);
+            if (user) {
+                const deleted = await deleteBooking(id, timeCollection);
+                return response({ code: "DELETE", msg: deleted });
+            }
+        }
+        return authFailed();
+    }
+    
+    // Get user from database using email from JWT
+    const user = await getUser(decodedToken.email, userCollection);
+    if (user) {
         const deleted = await deleteBooking(id, timeCollection);
         return response({ code: "DELETE", msg: deleted });
     } else return authFailed();

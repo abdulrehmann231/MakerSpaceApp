@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { accountInfo, setUserData } from '@/lib/api'
+import { useRouter } from 'next/navigation'
 
 export default function AccountPage() {
   const [firstname, setFirstname] = useState("...")
@@ -17,13 +18,13 @@ export default function AccountPage() {
   const [slack, setSlack] = useState("")
   const [showemail, setShowemail] = useState(false)
   const [showphone, setShowphone] = useState(false)
-
+  const router = useRouter()
   useEffect(() => {
     // Load account info
     const loadAccountInfo = async () => {
       try {
         const data = await accountInfo()
-        if (data && data.msg) {
+        if (data && data.code === "FOUND") {
           const info = data.msg
           setFirstname(info.firstname || "...")
           setLastname(info.lastname || "...")
@@ -42,6 +43,16 @@ export default function AccountPage() {
             setShowemail(info.userData.showemail || false)
             setShowphone(info.userData.showphone || false)
           }
+          else{
+            
+            router.push('/login')
+          }
+        }
+        else if (data && data.code === "UNAUTHORIZED" ) {
+          router.push('/login')
+        }
+        else{
+          router.push('/login')
         }
       } catch (error) {
         console.error('Error loading account info:', error)
@@ -66,8 +77,15 @@ export default function AccountPage() {
         showemail,
         showphone
       }
-      await setUserData(email, userData)
-      console.log('Profile saved successfully')
+      const data = await setUserData(email, userData)
+      if (data && data.code === "UPDATE") {
+        console.log('profile updated')
+      }
+      else{
+        console.error('failed to update profile')
+        router.push('/login')
+      }
+      
     } catch (error) {
       console.error('Error saving profile:', error)
     }
