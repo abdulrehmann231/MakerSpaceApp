@@ -94,7 +94,8 @@ export default function AvailabilityPage() {
   }
 
   const getTimeSlot = (hour) => {
-    return `${hour.toString().padStart(2, '0')}:00`
+    const nextHour = hour + 1
+    return `${hour.toString().padStart(2, '0')}:00 - ${nextHour.toString().padStart(2, '0')}:00`
   }
 
   if (loading) {
@@ -183,12 +184,20 @@ export default function AvailabilityPage() {
                   <div className="slot-wrap">
                     {weekTemplate[i].map((val, h) => (
                       <div className="slot" key={h}>
-                        <div className="border rounded shadow-sm p-2 d-flex flex-column align-items-stretch h-100 bg-light">
-                          <small className="text-muted mb-2" aria-hidden>{getTimeSlot(h)}</small>
-                          <div className="d-flex align-items-center flex-nowrap w-100">
-                            <button aria-label={`Decrease capacity at ${getTimeSlot(h)}`} className="btn btn-outline-secondary btn-sm mr-1" style={{flex:'0 0 28px', lineHeight:1}} onClick={() => updateSlot(i, h, -1)}>-</button>
-                            <div className="badge badge-secondary text-center" style={{flex:'1 1 auto', minWidth:36, padding:'6px 0'}}>{val}</div>
-                            <button aria-label={`Increase capacity at ${getTimeSlot(h)}`} className="btn btn-outline-secondary btn-sm ml-1" style={{flex:'0 0 28px', lineHeight:1}} onClick={() => updateSlot(i, h, +1)}>+</button>
+                        <div className="counter-card">
+                          <div className="time-label">{getTimeSlot(h)}</div>
+                          <div className="counter-controls">
+                            <button 
+                              aria-label={`Decrease capacity at ${getTimeSlot(h)}`} 
+                              className="counter-btn minus-btn" 
+                              onClick={() => updateSlot(i, h, -1)}
+                            >−</button>
+                            <div className="counter-value">{val}</div>
+                            <button 
+                              aria-label={`Increase capacity at ${getTimeSlot(h)}`} 
+                              className="counter-btn plus-btn" 
+                              onClick={() => updateSlot(i, h, +1)}
+                            >+</button>
                           </div>
                         </div>
                       </div>
@@ -255,9 +264,77 @@ export default function AvailabilityPage() {
           gap:12px;
         }
         .slot{
-          flex: 1 1 150px; /* grow, shrink, base */
-          min-width: 140px; /* keeps buttons readable */
-          max-width: 220px; /* prevents over-expansion on wide screens */
+          flex: 1 1 120px; /* grow, shrink, base */
+          min-width: 110px; /* keeps buttons readable */
+          max-width: 180px; /* prevents over-expansion on wide screens */
+        }
+        .counter-card{
+          background: #f8f9fa;
+          border: 1px solid #dee2e6;
+          border-radius: 6px;
+          padding: 6px;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+          transition: all 0.2s ease;
+        }
+        .counter-card:hover{
+          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+          border-color: #007bff;
+        }
+        .time-label{
+          font-size: 9px;
+          color: #6c757d;
+          margin-bottom: 6px;
+          font-weight: 500;
+          text-align: center;
+          line-height: 1.2;
+        }
+        .counter-controls{
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          width: 100%;
+        }
+        .counter-btn{
+          width: 24px;
+          height: 24px;
+          border: 1px solid #ced4da;
+          background: white;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          font-weight: bold;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          color: #495057;
+        }
+        .counter-btn:hover{
+          background: #e9ecef;
+          border-color: #007bff;
+          color: #007bff;
+        }
+        .counter-btn:active{
+          transform: scale(0.95);
+        }
+        .counter-value{
+          flex: 1;
+          text-align: center;
+          font-size: 14px;
+          font-weight: 600;
+          color: #495057;
+          background: white;
+          border: 1px solid #ced4da;
+          border-radius: 4px;
+          padding: 2px 6px;
+          min-width: 32px;
+          max-width: 50px;
         }
       `}</style>
     </div>
