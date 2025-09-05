@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getAvailability, accountInfo, getSetting as apiGetSetting, setSetting as apiSetSetting } from '@/lib/api'
 import { useRouter } from 'next/navigation'
+import Loader from '@/components/Loader'
 
 export default function AvailabilityPage() {
   const [availabilityData, setAvailabilityData] = useState([])
@@ -99,13 +100,7 @@ export default function AvailabilityPage() {
   }
 
   if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="sr-only">Loading...</span>
-        </div>
-      </div>
-    )
+    return <Loader />
   }
 
   if (userRole !== 'admin') {
@@ -164,9 +159,16 @@ export default function AvailabilityPage() {
         </div>
         <div className="card mb-3 position-relative">
           {(settingsLoading || saving) && (
-            <div className="d-flex align-items-center justify-content-center position-absolute w-100 h-100" style={{top:0,left:0,background:'rgba(255,255,255,0.6)', zIndex: 2}}>
-              <div className="spinner-border text-primary" role="status">
-                <span className="sr-only">Loading...</span>
+            <div className="d-flex align-items-center justify-content-center position-absolute w-100 h-100" style={{top:0,left:0,background:'rgba(255,255,255,0.8)', zIndex: 2}}>
+              <div className="maxui-roller">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
               </div>
             </div>
           )}
@@ -211,9 +213,16 @@ export default function AvailabilityPage() {
 
         <div className="card mb-3 position-relative">
           {settingsLoading && (
-            <div className="d-flex align-items-center justify-content-center position-absolute w-100 h-100" style={{top:0,left:0,background:'rgba(255,255,255,0.6)', zIndex: 2}}>
-              <div className="spinner-border text-primary" role="status">
-                <span className="sr-only">Loading...</span>
+            <div className="d-flex align-items-center justify-content-center position-absolute w-100 h-100" style={{top:0,left:0,background:'rgba(255,255,255,0.8)', zIndex: 2}}>
+              <div className="maxui-roller">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
               </div>
             </div>
           )}

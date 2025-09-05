@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { accountInfo, setUserData } from '@/lib/api'
 import { useRouter } from 'next/navigation'
+import Loader from '@/components/Loader'
 
 export default function AccountPage() {
   const [firstname, setFirstname] = useState("...")
@@ -18,6 +19,7 @@ export default function AccountPage() {
   const [slack, setSlack] = useState("")
   const [showemail, setShowemail] = useState(false)
   const [showphone, setShowphone] = useState(false)
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
   useEffect(() => {
     // Load account info
@@ -58,7 +60,12 @@ export default function AccountPage() {
       }
     }
 
-    loadAccountInfo()
+    const loadData = async () => {
+      await loadAccountInfo()
+      setLoading(false)
+    }
+    
+    loadData()
   }, [])
 
   const handleSubmit = async (e) => {
@@ -88,6 +95,10 @@ export default function AccountPage() {
     } catch (error) {
       console.error('Error saving profile:', error)
     }
+  }
+
+  if (loading) {
+    return <Loader />
   }
 
   return (
