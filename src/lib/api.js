@@ -346,6 +346,54 @@ export async function setUserData(email, userData) {
   }
 }
 
+// Settings API (admin)
+export async function getSetting(key = 'availability') {
+  try {
+    const makeRequest = async () => {
+      const response = await fetch(`/api/settings?key=${encodeURIComponent(key)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+      return response;
+    };
+
+    const response = await makeRequest();
+    const data = await handleResponse(response, makeRequest);
+    if (data === false) return { code: 'UNAUTHORIZED', msg: null };
+    return data; // { code, msg }
+  } catch (error) {
+    console.error('Get setting error:', error);
+    return { code: 'ERROR', msg: null };
+  }
+}
+
+export async function setSetting(key, value) {
+  try {
+    const makeRequest = async () => {
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ key, value })
+      });
+      return response;
+    };
+
+    const response = await makeRequest();
+    const data = await handleResponse(response, makeRequest);
+    if (data === false) return { code: 'UNAUTHORIZED', msg: null };
+    return data; // { code: 'UPDATE' }
+  } catch (error) {
+    console.error('Set setting error:', error);
+    return { code: 'ERROR', msg: null };
+  }
+}
+
 // Utility functions
 export function dateString(n) {
   const d = new Date();

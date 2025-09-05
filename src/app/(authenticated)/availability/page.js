@@ -1,14 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getAvailability, accountInfo } from '@/lib/api'
+import { getAvailability, accountInfo, getSetting as apiGetSetting, setSetting as apiSetSetting } from '@/lib/api'
 import { useRouter } from 'next/navigation'
+import Loader from '@/components/Loader'
 
 export default function AvailabilityPage() {
   const [availabilityData, setAvailabilityData] = useState([])
   const [firstname, setFirstname] = useState("")
   const [userRole, setUserRole] = useState("user")
   const [loading, setLoading] = useState(true)
+  const [weekTemplate, setWeekTemplate] = useState(Array.from({ length: 7 }, () => Array(24).fill(0)))
+  const [holidays, setHolidays] = useState([])
+  const [recurHolidays, setRecurHolidays] = useState([])
+  const [dirty, setDirty] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [settingsLoading, setSettingsLoading] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -16,6 +23,7 @@ export default function AvailabilityPage() {
     const checkUserRole = async () => {
       try {
         const data = await accountInfo()
+        console.log(data)
         if (data && data.code === 'FOUND' && data.msg) {
           setFirstname(data.msg.firstname || "")
           setUserRole(data.msg.user || "user")
@@ -27,7 +35,7 @@ export default function AvailabilityPage() {
           }
           
           // Load availability data for admin
-          await loadAvailability()
+          await Promise.all([loadAvailability(), loadSettings()])
         } else if (data && data.code === "UNAUTHORIZED") {
           router.push('/login')
         } else {
@@ -61,6 +69,21 @@ export default function AvailabilityPage() {
     }
   }
 
+  const loadSettings = async () => {
+    try {
+      setSettingsLoading(true)
+      const data = await apiGetSetting('availability')
+      const cfg = (data && data.msg) || {}
+      if (cfg.spotsAvailable && Array.isArray(cfg.spotsAvailable)) setWeekTemplate(cfg.spotsAvailable)
+      if (Array.isArray(cfg.holidays)) setHolidays(cfg.holidays)
+      if (Array.isArray(cfg.recurHolidays)) setRecurHolidays(cfg.recurHolidays)
+    } catch (e) {
+      console.error('Error loading settings', e)
+    } finally {
+      setSettingsLoading(false)
+    }
+  }
+
   const formatDate = (dateString) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('en-GB', {
@@ -72,26 +95,287 @@ export default function AvailabilityPage() {
   }
 
   const getTimeSlot = (hour) => {
-    return `${hour.toString().padStart(2, '0')}:00`
+    const nextHour = hour + 1
+    return `${hour.toString().padStart(2, '0')}:00 - ${nextHour.toString().padStart(2, '0')}:00`
   }
 
   if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="sr-only">Loading...</span>
-        </div>
-      </div>
-    )
+    return <Loader />
   }
 
   if (userRole !== 'admin') {
     return null // Will redirect in useEffect
   }
 
+  const updateSlot = (dayIndex, hourIndex, delta) => {
+    setWeekTemplate(prev => {
+      const copy = prev.map(day => day.slice())
+      const nextVal = Math.max(0, (copy[dayIndex][hourIndex] || 0) + delta)
+      copy[dayIndex][hourIndex] = nextVal
+      return copy
+    })
+    setDirty(true)
+  }
+
+  const saveChanges = async () => {
+    try {
+      setSaving(true)
+      const data = await apiSetSetting('availability', { spotsAvailable: weekTemplate, holidays, recurHolidays })
+      if (!data || data.code !== 'UPDATE') throw new Error('Save failed')
+      setDirty(false)
+    } catch (e) {
+      console.error(e)
+      alert('Failed to save changes')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const addHoliday = (dateStr) => {
+    if (!dateStr) return
+    if (!holidays.includes(dateStr)) setHolidays(prev => { setDirty(true); return [...prev, dateStr] })
+  }
+  const removeHoliday = (dateStr) => {
+    setHolidays(prev => { setDirty(true); return prev.filter(d => d !== dateStr) })
+  }
+  const addRecurHoliday = (mmdd) => {
+    if (!mmdd) return
+    if (!recurHolidays.includes(mmdd)) setRecurHolidays(prev => { setDirty(true); return [...prev, mmdd] })
+  }
+  const removeRecurHoliday = (mmdd) => {
+    setRecurHolidays(prev => { setDirty(true); return prev.filter(d => d !== mmdd) })
+  }
+
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+
   return (
-    <div>
-      <h1>Availability</h1>
+    <div className="no-top-gap" style={{padding: '15px'}}>
+      <div className="section">
+        <div className="row">
+          <div className="col">
+            <h3 className="mb-2">Availability</h3>
+            <p className="text-muted">Set default hourly capacity per weekday and manage holidays.</p>
+          </div>
+        </div>
+        <div className="card mb-3 position-relative">
+          {(settingsLoading || saving) && (
+            <div className="d-flex align-items-center justify-content-center position-absolute w-100 h-100" style={{top:0,left:0,background:'rgba(255,255,255,0.8)', zIndex: 2}}>
+              <div className="maxui-roller">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+              </div>
+            </div>
+          )}
+          <div className="card-body">
+            <ul className="nav nav-pills mb-3" role="tablist">
+              {dayNames.map((d, i) => (
+                <li className="nav-item" key={i}>
+                  <a className={`nav-link ${i===0?'active':''}`} data-toggle="tab" href={`#day-${i}`}>{d}</a>
+                </li>
+              ))}
+            </ul>
+            <div className="tab-content" style={{overflowX:'hidden'}}>
+              {dayNames.map((d, i) => (
+                <div className={`tab-pane fade ${i===0?'show active':''}`} id={`day-${i}`} key={i}>
+                  <div className="slot-wrap">
+                    {weekTemplate[i].map((val, h) => (
+                      <div className="slot" key={h}>
+                        <div className="counter-card">
+                          <div className="time-label">{getTimeSlot(h)}</div>
+                          <div className="counter-controls">
+                            <button 
+                              aria-label={`Decrease capacity at ${getTimeSlot(h)}`} 
+                              className="counter-btn minus-btn" 
+                              onClick={() => updateSlot(i, h, -1)}
+                            >−</button>
+                            <div className="counter-value">{val}</div>
+                            <button 
+                              aria-label={`Increase capacity at ${getTimeSlot(h)}`} 
+                              className="counter-btn plus-btn" 
+                              onClick={() => updateSlot(i, h, +1)}
+                            >+</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="card mb-3 position-relative">
+          {settingsLoading && (
+            <div className="d-flex align-items-center justify-content-center position-absolute w-100 h-100" style={{top:0,left:0,background:'rgba(255,255,255,0.8)', zIndex: 2}}>
+              <div className="maxui-roller">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+              </div>
+            </div>
+          )}
+          <div className="card-body">
+            <h5 className="mb-2">Holidays</h5>
+            <div className="mb-2 d-flex">
+              <input type="date" className="form-control mr-2" onChange={(e)=>addHoliday(e.target.value)} />
+            </div>
+            <div className="mb-3">
+              {holidays.length===0 && (<p className="text-muted">No holidays added yet.</p>)}
+              {holidays.map(d => (
+                <span key={d} className="badge badge-secondary mr-2 mb-2">
+                  {d}
+                  <a className="ml-2 cursor-pointer" onClick={()=>removeHoliday(d)}>×</a>
+                </span>
+              ))}
+            </div>
+            <h6 className="mb-2">Recurring (MM-DD)</h6>
+            <div className="mb-2 d-flex">
+              <input type="text" placeholder="MM-DD" className="form-control mr-2" onBlur={(e)=>addRecurHoliday(e.target.value)} />
+            </div>
+            <div>
+              {recurHolidays.length===0 && (<p className="text-muted">No recurring holidays.</p>)}
+              {recurHolidays.map(d => (
+                <span key={d} className="badge badge-secondary mr-2 mb-2">
+                  {d}
+                  <a className="ml-2 cursor-pointer" onClick={()=>removeRecurHoliday(d)}>×</a>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="row mx-0 mt-3">
+          <div className="col">
+            <div className="d-flex align-items-center justify-content-between p-3 bg-light rounded">
+              <small className="text-muted">{dirty ? 'Unsaved changes' : 'All changes saved'}</small>
+              <div>
+                <button className="btn btn-outline-secondary mr-2" disabled={!dirty || saving} onClick={()=>{loadSettings(); setDirty(false)}}>Discard</button>
+                <button className="btn btn-primary" disabled={!dirty || saving} onClick={saveChanges}>{saving ? 'Saving...' : 'Save changes'}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <style jsx>{`
+        .slot-wrap{
+          display:flex;
+          flex-wrap:wrap;
+          gap:8px;
+          width: 100%;
+          justify-content: flex-start;
+        }
+        .slot{
+          flex: 0 0 auto;
+          width: calc(12.5% - 7px); /* 8 slots per row on large screens */
+          min-width: 100px;
+          max-width: 150px;
+        }
+        @media (max-width: 1200px) {
+          .slot {
+            width: calc(16.666% - 7px); /* 6 slots per row */
+          }
+        }
+        @media (max-width: 992px) {
+          .slot {
+            width: calc(20% - 7px); /* 5 slots per row */
+          }
+        }
+        @media (max-width: 768px) {
+          .slot {
+            width: calc(25% - 7px); /* 4 slots per row */
+          }
+        }
+        @media (max-width: 576px) {
+          .slot {
+            width: calc(33.333% - 7px); /* 3 slots per row */
+          }
+        }
+        @media (max-width: 400px) {
+          .slot {
+            width: calc(50% - 7px); /* 2 slots per row */
+          }
+        }
+        .counter-card{
+          background: #f8f9fa;
+          border: 1px solid #dee2e6;
+          border-radius: 6px;
+          padding: 6px;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+          transition: all 0.2s ease;
+        }
+        .counter-card:hover{
+          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+          border-color: #007bff;
+        }
+        .time-label{
+          font-size: 9px;
+          color: #6c757d;
+          margin-bottom: 6px;
+          font-weight: 500;
+          text-align: center;
+          line-height: 1.2;
+        }
+        .counter-controls{
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          width: 100%;
+        }
+        .counter-btn{
+          width: 24px;
+          height: 24px;
+          border: 1px solid #ced4da;
+          background: white;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          font-weight: bold;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          color: #495057;
+        }
+        .counter-btn:hover{
+          background: #e9ecef;
+          border-color: #007bff;
+          color: #007bff;
+        }
+        .counter-btn:active{
+          transform: scale(0.95);
+        }
+        .counter-value{
+          flex: 1;
+          text-align: center;
+          font-size: 14px;
+          font-weight: 600;
+          color: #495057;
+          background: white;
+          border: 1px solid #ced4da;
+          border-radius: 4px;
+          padding: 2px 6px;
+          min-width: 32px;
+          max-width: 50px;
+        }
+      `}</style>
     </div>
   )
 }

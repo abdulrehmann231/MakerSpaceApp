@@ -2246,7 +2246,8 @@ body.theme-dark.color-theme-black .page {
     position: fixed;
     background: rgba(0, 0, 0, 0.3);
     z-index: 9999;
-    display: flex
+    display: flex;
+    top: 0;
 }
 .maxui-roller {
     display: inline-block;

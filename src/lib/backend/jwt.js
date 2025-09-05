@@ -17,6 +17,7 @@ export const generateAccessToken = (user) => {
     email: user.key || user.email,
     firstname: user.firstname,
     lastname: user.lastname,
+    user: user.user,
     iat: Math.floor(Date.now() / 1000),
   };
 

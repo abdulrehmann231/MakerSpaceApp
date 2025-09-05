@@ -11,6 +11,22 @@ export const getSetting = async (setting, collectionName) => {
     }
 };
 
+export const setSetting = async (setting, value, collectionName) => {
+    try {
+        console.log("here");
+        const collection = await getCollection(collectionName);
+        const result = await collection.updateOne(
+            { key: setting },
+            { $set: { ...value, key: setting } },
+            { upsert: true, returnDocument: 'after' }
+        );
+        return result;
+    } catch (err) {
+        console.log(err, err.stack);
+        return null;
+    }
+};
+
 export const changePassword = async (email, newpassword, collectionName, { hash, salt }) => {
     try {
         const collection = await getCollection(collectionName);
