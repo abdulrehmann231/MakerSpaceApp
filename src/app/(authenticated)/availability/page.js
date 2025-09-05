@@ -149,7 +149,7 @@ export default function AvailabilityPage() {
   const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 
   return (
-    <div className="container">
+    <div className="no-top-gap" style={{padding: '15px'}}>
       <div className="section">
         <div className="row">
           <div className="col">
@@ -256,12 +256,14 @@ export default function AvailabilityPage() {
           </div>
         </div>
 
-        <div className="fixed-footer p-2 bg-white border-top">
-          <div className="d-flex align-items-center justify-content-between">
-            <small className="text-muted">{dirty ? 'Unsaved changes' : 'All changes saved'}</small>
-            <div>
-              <button className="btn btn-link mr-2" disabled={!dirty || saving} onClick={()=>{loadSettings(); setDirty(false)}}>Discard</button>
-              <button className="btn btn-primary" disabled={!dirty || saving} onClick={saveChanges}>{saving ? 'Saving...' : 'Save changes'}</button>
+        <div className="row mx-0 mt-3">
+          <div className="col">
+            <div className="d-flex align-items-center justify-content-between p-3 bg-light rounded">
+              <small className="text-muted">{dirty ? 'Unsaved changes' : 'All changes saved'}</small>
+              <div>
+                <button className="btn btn-outline-secondary mr-2" disabled={!dirty || saving} onClick={()=>{loadSettings(); setDirty(false)}}>Discard</button>
+                <button className="btn btn-primary" disabled={!dirty || saving} onClick={saveChanges}>{saving ? 'Saving...' : 'Save changes'}</button>
+              </div>
             </div>
           </div>
         </div>
@@ -270,12 +272,40 @@ export default function AvailabilityPage() {
         .slot-wrap{
           display:flex;
           flex-wrap:wrap;
-          gap:12px;
+          gap:8px;
+          width: 100%;
+          justify-content: flex-start;
         }
         .slot{
-          flex: 1 1 120px; /* grow, shrink, base */
-          min-width: 110px; /* keeps buttons readable */
-          max-width: 180px; /* prevents over-expansion on wide screens */
+          flex: 0 0 auto;
+          width: calc(12.5% - 7px); /* 8 slots per row on large screens */
+          min-width: 100px;
+          max-width: 150px;
+        }
+        @media (max-width: 1200px) {
+          .slot {
+            width: calc(16.666% - 7px); /* 6 slots per row */
+          }
+        }
+        @media (max-width: 992px) {
+          .slot {
+            width: calc(20% - 7px); /* 5 slots per row */
+          }
+        }
+        @media (max-width: 768px) {
+          .slot {
+            width: calc(25% - 7px); /* 4 slots per row */
+          }
+        }
+        @media (max-width: 576px) {
+          .slot {
+            width: calc(33.333% - 7px); /* 3 slots per row */
+          }
+        }
+        @media (max-width: 400px) {
+          .slot {
+            width: calc(50% - 7px); /* 2 slots per row */
+          }
         }
         .counter-card{
           background: #f8f9fa;
