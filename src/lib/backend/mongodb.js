@@ -1,4 +1,9 @@
 import { MongoClient } from 'mongodb';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env' });
 
 const uri = process.env.MONGODB_URI 
 const dbName = process.env.MONGODB_DB 
@@ -7,6 +12,7 @@ let client;
 let db;
 
 export async function connectToDatabase() {
+
   if (client && db) {
     return { client, db };
   }

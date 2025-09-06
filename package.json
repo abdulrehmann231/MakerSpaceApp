@@ -7,7 +7,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "list-indexes": "node scripts/check-indexes.js",
+    "check-index-usage": "node scripts/check-index-usage.js",
+    "create-indexes": "node scripts/create-indexes.js",
+    "drop-indexes": "node scripts/drop-indexes.js",
+    "drop-unused-indexes": "node scripts/drop-unused-indexes.js"
   },
   "dependencies": {
     "dotenv": "^17.2.1",
