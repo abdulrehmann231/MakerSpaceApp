@@ -11,12 +11,8 @@
  *   npm run check-index-usage
  */
 
-import dotenv from 'dotenv';
 import { connectToDatabase, closeConnection } from '../src/lib/backend/mongodb.js';
 
-// Load environment variables
-dotenv.config({ path: '.env.local' });
-dotenv.config({ path: '.env' });
 
 async function checkIndexUsage() {
   try {

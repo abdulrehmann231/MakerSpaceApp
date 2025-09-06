@@ -10,13 +10,10 @@
  *   npm run create-indexes
  */
 
-import dotenv from 'dotenv';
+
 import { createAllIndexes, listAllIndexes } from '../src/lib/backend/createIndexes.js';
 import { connectToDatabase, closeConnection } from '../src/lib/backend/mongodb.js';
 
-// Load environment variables
-dotenv.config({ path: '.env.local' });
-dotenv.config({ path: '.env' });
 
 async function main() {
   try {
