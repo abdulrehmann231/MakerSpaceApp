@@ -43,10 +43,33 @@ export function useTheme() {
       setIsDarkMode(isDark)
       document.body.classList.remove('theme-light')
       document.body.classList.add(savedThemeLayout)
+    } else {
+      // If no saved layout, check current DOM state
+      const isCurrentlyDark = document.body.classList.contains('theme-dark')
+      setIsDarkMode(isCurrentlyDark)
     }
 
     setIsInitialized(true)
   }, [])
+
+  // Listen for theme changes from other components
+  useEffect(() => {
+    if (typeof document === 'undefined' || !isInitialized) return
+
+    const observer = new MutationObserver(() => {
+      const isCurrentlyDark = document.body.classList.contains('theme-dark')
+      if (isCurrentlyDark !== isDarkMode) {
+        setIsDarkMode(isCurrentlyDark)
+      }
+    })
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class']
+    })
+
+    return () => observer.disconnect()
+  }, [isInitialized, isDarkMode])
 
   const changeThemeColor = (newThemeColor) => {
     if (typeof document === 'undefined') return
@@ -65,7 +88,7 @@ export function useTheme() {
 
   const toggleDarkMode = (isDark) => {
     if (typeof document === 'undefined') return
-
+    
     setIsDarkMode(isDark)
     
     if (isDark) {
