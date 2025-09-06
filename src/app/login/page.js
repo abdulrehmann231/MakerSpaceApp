@@ -100,9 +100,9 @@ export default function LoginPage() {
             <br />
             <div className="row no-gutters">
               <div className="col-6 text-left">
-                <a href="#" className="text-white mt-3" style={{display:"none"}}>
-                  Forget Password?
-                </a>
+                <Link href="/forgot-password" className="text-white mt-3">
+                  Forgot Password?
+                </Link>
               </div>
               <div className="col-6 text-right">
                 <Link href="/register" className="text-white text-center mt-3">

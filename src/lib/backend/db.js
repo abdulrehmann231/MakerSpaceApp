@@ -42,6 +42,66 @@ export const changePassword = async (email, newpassword, collectionName, { hash,
     }
 };
 
+// Password reset token functions
+export const createPasswordResetToken = async (email, token, expiresAt) => {
+    try {
+        const collection = await getCollection('password_reset_tokens');
+        const result = await collection.insertOne({
+            email,
+            token,
+            expiresAt,
+            createdAt: new Date(),
+            used: false
+        });
+        return result;
+    } catch (err) {
+        console.log(err, err.stack);
+        return null;
+    }
+};
+
+export const getPasswordResetToken = async (token) => {
+    try {
+        const collection = await getCollection('password_reset_tokens');
+        const result = await collection.findOne({
+            token,
+            used: false,
+            expiresAt: { $gt: new Date() }
+        });
+        return result;
+    } catch (err) {
+        console.log(err, err.stack);
+        return null;
+    }
+};
+
+export const markTokenAsUsed = async (token) => {
+    try {
+        const collection = await getCollection('password_reset_tokens');
+        const result = await collection.updateOne(
+            { token },
+            { $set: { used: true, usedAt: new Date() } }
+        );
+        return result;
+    } catch (err) {
+        console.log(err, err.stack);
+        return null;
+    }
+};
+
+export const cleanupExpiredTokens = async () => {
+    try {
+        const collection = await getCollection('password_reset_tokens');
+        const result = await collection.deleteMany({
+            expiresAt: { $lt: new Date() }
+        });
+        return result;
+    } catch (err) {
+        console.log(err, err.stack);
+        return null;
+    }
+};
+
 export const getUser = async (username, collectionName) => {
     try {
         const collection = await getCollection(collectionName);
