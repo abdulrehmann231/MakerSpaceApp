@@ -8,7 +8,7 @@ export default function Footer() {
 
   // Helper function to get the appropriate icon based on theme
   const getIconSrc = (baseName) => {
-    if (!isInitialized) return `/img/${baseName}.png` // Default during loading
+    if (!isInitialized) return `/img/${baseName}-light.png` // Default during loading
     return `/img/${baseName}-${isDarkMode ? 'dark' : 'light'}.png`
   }
 
