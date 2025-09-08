@@ -147,6 +147,23 @@ export default function AvailabilityPage() {
   }
 
   const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+  const hourIndices = Array.from({ length: 24 }, (_, i) => i)
+
+  const setSlotValue = (dayIndex, hourIndex, value) => {
+    const clamped = Math.max(0, Math.min(5, Number.isFinite(value) ? value : 0))
+    setWeekTemplate(prev => {
+      const copy = prev.map(day => day.slice())
+      copy[dayIndex][hourIndex] = clamped
+      return copy
+    })
+    setDirty(true)
+  }
+
+  const formatHourLabel = (hour) => `${hour.toString().padStart(2,'0')}:00`
+
+  const getCellClassName = (value) => {
+    return value === 0 ? 'cell cell-zero' : 'cell cell-positive'
+  }
 
   return (
     <div className="no-top-gap" style={{padding: '15px'}}>
@@ -173,40 +190,49 @@ export default function AvailabilityPage() {
             </div>
           )}
           <div className="card-body">
-            <ul className="nav nav-pills mb-3" role="tablist">
-              {dayNames.map((d, i) => (
-                <li className="nav-item" key={i}>
-                  <a className={`nav-link ${i===0?'active':''}`} data-toggle="tab" href={`#day-${i}`}>{d}</a>
-                </li>
-              ))}
-            </ul>
-            <div className="tab-content" style={{overflowX:'hidden'}}>
-              {dayNames.map((d, i) => (
-                <div className={`tab-pane fade ${i===0?'show active':''}`} id={`day-${i}`} key={i}>
-                  <div className="slot-wrap">
-                    {weekTemplate[i].map((val, h) => (
-                      <div className="slot" key={h}>
-                        <div className="counter-card">
-                          <div className="time-label">{getTimeSlot(h)}</div>
-                          <div className="counter-controls">
-                            <button 
-                              aria-label={`Decrease capacity at ${getTimeSlot(h)}`} 
-                              className="counter-btn minus-btn" 
-                              onClick={() => updateSlot(i, h, -1)}
-                            >−</button>
-                            <div className="counter-value">{val}</div>
-                            <button 
-                              aria-label={`Increase capacity at ${getTimeSlot(h)}`} 
-                              className="counter-btn plus-btn" 
-                              onClick={() => updateSlot(i, h, +1)}
-                            >+</button>
-                          </div>
-                        </div>
-                      </div>
+            <div className="d-flex align-items-center justify-content-between mb-2">
+              <small className="text-muted">Edit hourly capacity per weekday</small>
+              <div className="d-flex align-items-center">
+                <span className="legend-swatch swatch-zero mr-1"></span>
+                <small className="mr-3">0</small>
+                <span className="legend-swatch swatch-positive mr-1"></span>
+                <small>1–5</small>
+              </div>
+            </div>
+            <div className="table-responsive week-table-wrapper">
+              <table className="table table-sm table-bordered align-middle mb-0 week-table" role="grid" aria-label="Weekly availability grid">
+                <thead className="thead-sticky">
+                  <tr>
+                    <th scope="col" className="text-nowrap sticky-col !bg-white" style={{width: '96px', backgroundColor: 'white !important'}}>Time</th>
+                    {dayNames.map((d) => (
+                      <th scope="col" key={`head-${d}`} className="text-center !bg-white" style={{backgroundColor: 'white !important'}}>{d}</th>
                     ))}
-                  </div>
-                </div>
-              ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {hourIndices.map((h) => (
+                    <tr key={`row-${h}`}>
+                      <th scope="row" className="text-muted font-monospace small text-nowrap sticky-col " >{formatHourLabel(h)}</th>
+                      {dayNames.map((_, di) => {
+                        const value = (weekTemplate[di] && weekTemplate[di][h]) || 0
+                        return (
+                          <td key={`cell-${di}-${h}`} className={getCellClassName(value)}>
+                            <input
+                              type="number"
+                              min={0}
+                              max={5}
+                              className="form-control form-control-sm text-center bg-transparent border-0 shadow-none cell-input"
+                              value={value}
+                              onChange={(e)=> setSlotValue(di, h, parseInt(e.target.value, 10))}
+                              onFocus={(e)=> e.target.select()}
+                            />
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -269,112 +295,107 @@ export default function AvailabilityPage() {
         </div>
       </div>
       <style jsx>{`
-        .slot-wrap{
-          display:flex;
-          flex-wrap:wrap;
-          gap:8px;
-          width: 100%;
-          justify-content: flex-start;
-        }
-        .slot{
-          flex: 0 0 auto;
-          width: calc(12.5% - 7px); /* 8 slots per row on large screens */
-          min-width: 100px;
-          max-width: 150px;
-        }
-        @media (max-width: 1200px) {
-          .slot {
-            width: calc(16.666% - 7px); /* 6 slots per row */
-          }
-        }
-        @media (max-width: 992px) {
-          .slot {
-            width: calc(20% - 7px); /* 5 slots per row */
-          }
-        }
-        @media (max-width: 768px) {
-          .slot {
-            width: calc(25% - 7px); /* 4 slots per row */
-          }
-        }
-        @media (max-width: 576px) {
-          .slot {
-            width: calc(33.333% - 7px); /* 3 slots per row */
-          }
-        }
-        @media (max-width: 400px) {
-          .slot {
-            width: calc(50% - 7px); /* 2 slots per row */
-          }
-        }
-        .counter-card{
-          background: #f8f9fa;
-          border: 1px solid #dee2e6;
+        .week-table-wrapper{
+          max-height: 384px;
+          overflow: auto;
+          border: 1px solid var(--bs-border-color, #dee2e6);
           border-radius: 6px;
-          padding: 6px;
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.08);
-          transition: all 0.2s ease;
+          /* Firefox */
+          scrollbar-width: auto;
+          scrollbar-color: var(--bs-border-color, #cbd5e1) transparent;
         }
-        .counter-card:hover{
-          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-          border-color: #007bff;
+        /* WebKit scrollbars */
+        :global(.week-table-wrapper::-webkit-scrollbar){
+          width: 12px;
+          height: 12px;
         }
-        .time-label{
-          font-size: 9px;
-          color: #6c757d;
-          margin-bottom: 6px;
-          font-weight: 500;
-          text-align: center;
-          line-height: 1.2;
+        :global(.week-table-wrapper::-webkit-scrollbar-thumb){
+          background-color: var(--bs-border-color, #cbd5e1);
+          border-radius: 10px;
+          border: 3px solid var(--bs-body-bg);
         }
-        .counter-controls{
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          width: 100%;
+        :global(.week-table-wrapper::-webkit-scrollbar-track){
+          background: transparent;
         }
-        .counter-btn{
-          width: 24px;
-          height: 24px;
-          border: 1px solid #ced4da;
-          background: white;
-          border-radius: 4px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 14px;
-          font-weight: bold;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          color: #495057;
+        .week-table{
+          min-width: 720px;
+          position: relative;
+          table-layout: fixed;
+          font-family: var(--bs-font-sans-serif);
+          color: var(--bs-body-color);
+          border-collapse: separate;
+          border-spacing: 0;
         }
-        .counter-btn:hover{
-          background: #e9ecef;
-          border-color: #007bff;
-          color: #007bff;
-        }
-        .counter-btn:active{
-          transform: scale(0.95);
-        }
-        .counter-value{
-          flex: 1;
-          text-align: center;
-          font-size: 14px;
+        .thead-sticky th{
+          position: sticky;
+          top: 0;
+          z-index: 10;
+          background: #ffffff;
+          box-shadow: inset 0 -1px 0 var(--bs-border-color, #dee2e6), 0 2px 4px rgba(0,0,0,.02);
           font-weight: 600;
-          color: #495057;
-          background: white;
-          border: 1px solid #ced4da;
-          border-radius: 4px;
-          padding: 2px 6px;
-          min-width: 32px;
-          max-width: 50px;
+          background-clip: padding-box;
+          /* Ensure fully opaque header to cover cells underneath */
+          background-color: #ffffff !important;
         }
+        /* Sticky first column (time) */
+        .sticky-col{
+          position: sticky;
+          left: 0;
+          z-index: 9;
+          background: #ffffff;
+          box-shadow: 1px 0 0 var(--bs-border-color, #e9ecef);
+        }
+        /* Stronger z-index for top-left header corner */
+        thead .sticky-col{ z-index: 11; }
+        /* Compact row height */
+        .week-table tbody td, .week-table tbody th{
+          padding-top: .2rem;
+          padding-bottom: .2rem;
+          line-height: 1.1;
+          background-clip: padding-box;
+        }
+        /* Subtle hover highlight */
+        .week-table tbody tr:hover td{
+          filter: brightness(0.985);
+        }
+        .cell-zero{
+          background-color: var(--bs-danger-bg-subtle, #f8d7da);
+        }
+        .cell-positive{
+          background-color: var(--bs-success-bg-subtle, #d1e7dd);
+        }
+        .cell-input:focus{
+          border-color: var(--bs-primary, #0d6efd) !important;
+          background-color: var(--bs-body-bg);
+        }
+        .cell-input{
+          min-height: 22px;
+          height: 22px;
+          padding: 0 .25rem;
+          font-size: 0.875rem;
+          line-height: 1.1;
+          color: var(--bs-body-color);
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        /* Remove number input spinners for cleaner look */
+        .cell-input::-webkit-outer-spin-button,
+        .cell-input::-webkit-inner-spin-button{
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        .cell-input[type=number]{
+          -moz-appearance: textfield;
+        }
+        .legend-swatch{
+          display:inline-block;
+          width: 14px;
+          height: 14px;
+          border-radius: 3px;
+          border: 1px solid var(--bs-border-color, #dee2e6);
+        }
+        .swatch-zero{ background-color: var(--bs-danger-bg-subtle, #f8d7da); }
+        .swatch-positive{ background-color: var(--bs-success-bg-subtle, #d1e7dd); }
       `}</style>
     </div>
   )
