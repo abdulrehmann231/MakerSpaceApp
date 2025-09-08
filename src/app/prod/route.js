@@ -52,7 +52,9 @@ export async function GET(request) {
     return new NextResponse(value, {
       status: 200,
       headers: {
-        "Content-Type": "text/calendar",
+        "Content-Type": "text/calendar; charset=utf-8",
+        "Content-Disposition": "attachment; filename=makerspace.ics",
+        "Cache-Control": "no-store",
       },
     });
   } catch (err) {
