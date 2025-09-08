@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Makerspace App
 
-## Getting Started
+## Prerequisites
+- Node.js 18+
+- A MongoDB Atlas cluster (or self-hosted MongoDB)
+- Gmail App Password 
 
-First, run the development server:
+## Environment Variables
+Copy `.env.example` to `.env.local` and fill in the values.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Required:
+- `MONGODB_URI`: Your MongoDB connection string
+  - In Atlas, click Connect → Drivers → copy the URI (replace username/password)
+- `MONGODB_DB`: Database name (default `makerspace`)
+- `NODE_ENV`: `development` or `production`
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Email :
+- Gmail SMTP
+  - `EMAIL_USER`: your Gmail address
+  - `EMAIL_PASSWORD`: an App Password from Google (Account → Security → 2‑Step Verification → App passwords)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
+JWT (required):
+- `JWT_SECRET` – strong random string (e.g., `openssl rand -base64 32`)
+- `JWT_EXPIRES_IN` – e.g. `30s`, `10m`, `1h`
+- `JWT_REFRESH_SECRET` – strong random string (different from access secret)
+- `JWT_REFRESH_EXPIRES_IN` – e.g. `5m`, `7d`
 
-To learn more about Next.js, take a look at the following resources:
+## Setup
+1. Install deps
+```bash
+npm install
+```
+2. Seed settings ( creates default availability):
+```bash
+node setup-settings.js
+```
+3. Run locally
+```bash
+npm run dev
+```
+Open `http://localhost:3000`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## API Notes
+- Public calendar feed: `GET /prod?action=calendar` (ICS download)
+- Auth is JWT-based; ensure access and refresh secrets are set in env.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy
+- Vercel: push to a repo and import the project. Add the `.env.local` variables in the Vercel dashboard (Project → Settings → Environment Variables).
 
-## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
