@@ -16,6 +16,8 @@ export default function AvailabilityPage() {
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
   const [settingsLoading, setSettingsLoading] = useState(false)
+  const [newHolidayDate, setNewHolidayDate] = useState("")
+  const [newRecurHoliday, setNewRecurHoliday] = useState("")
   const router = useRouter()
 
   useEffect(() => {
@@ -134,13 +136,16 @@ export default function AvailabilityPage() {
   const addHoliday = (dateStr) => {
     if (!dateStr) return
     if (!holidays.includes(dateStr)) setHolidays(prev => { setDirty(true); return [...prev, dateStr] })
+    setNewHolidayDate("")
   }
   const removeHoliday = (dateStr) => {
     setHolidays(prev => { setDirty(true); return prev.filter(d => d !== dateStr) })
   }
   const addRecurHoliday = (mmdd) => {
     if (!mmdd) return
+    if (!/^\d{2}-\d{2}$/.test(mmdd)) return
     if (!recurHolidays.includes(mmdd)) setRecurHolidays(prev => { setDirty(true); return [...prev, mmdd] })
+    setNewRecurHoliday("")
   }
   const removeRecurHoliday = (mmdd) => {
     setRecurHolidays(prev => { setDirty(true); return prev.filter(d => d !== mmdd) })
@@ -255,7 +260,8 @@ export default function AvailabilityPage() {
           <div className="card-body">
             <h5 className="mb-2">Holidays</h5>
             <div className="mb-2 d-flex">
-              <input type="date" className="form-control mr-2" onChange={(e)=>addHoliday(e.target.value)} />
+              <input type="date" className="form-control mr-2" value={newHolidayDate} onChange={(e)=>setNewHolidayDate(e.target.value)} />
+              <button className="btn btn-primary" type="button" disabled={!newHolidayDate || holidays.includes(newHolidayDate)} onClick={()=>addHoliday(newHolidayDate)}>Add</button>
             </div>
             <div className="mb-3">
               {holidays.length===0 && (<p className="text-muted">No holidays added yet.</p>)}
@@ -268,7 +274,8 @@ export default function AvailabilityPage() {
             </div>
             <h6 className="mb-2">Recurring (MM-DD)</h6>
             <div className="mb-2 d-flex">
-              <input type="text" placeholder="MM-DD" className="form-control mr-2" onBlur={(e)=>addRecurHoliday(e.target.value)} />
+              <input type="text" placeholder="MM-DD" className="form-control mr-2" value={newRecurHoliday} onChange={(e)=>setNewRecurHoliday(e.target.value)} />
+              <button className="btn btn-primary" type="button" disabled={!/^\d{2}-\d{2}$/.test(newRecurHoliday) || recurHolidays.includes(newRecurHoliday)} onClick={()=>addRecurHoliday(newRecurHoliday)}>Add</button>
             </div>
             <div>
               {recurHolidays.length===0 && (<p className="text-muted">No recurring holidays.</p>)}
@@ -284,7 +291,7 @@ export default function AvailabilityPage() {
 
         <div className="row mx-0 mt-3">
           <div className="col">
-            <div className="d-flex align-items-center justify-content-between p-3 bg-light rounded">
+            <div className="savebar d-flex align-items-center justify-content-between p-3 bg-light rounded">
               <small className="text-muted">{dirty ? 'Unsaved changes' : 'All changes saved'}</small>
               <div>
                 <button className="btn btn-outline-secondary mr-2" disabled={!dirty || saving} onClick={()=>{loadSettings(); setDirty(false)}}>Discard</button>
@@ -396,6 +403,25 @@ export default function AvailabilityPage() {
         }
         .swatch-zero{ background-color: var(--bs-danger-bg-subtle, #f8d7da); }
         .swatch-positive{ background-color: var(--bs-success-bg-subtle, #d1e7dd); }
+        /* Responsive save bar */
+        @media (max-width: 480px){
+          .savebar{
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+          }
+          .savebar small{ margin-bottom: 4px; }
+          .savebar > div{
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          }
+          .savebar .btn{
+            width: 100%;
+            margin-right: 0 !important;
+          }
+        }
       `}</style>
     </div>
   )
