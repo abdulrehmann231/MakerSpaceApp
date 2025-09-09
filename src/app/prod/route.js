@@ -1,27 +1,30 @@
 import { NextResponse } from "next/server";
 import { createEvents } from "ics";
-import { getAllBookings } from "../../../lib/backend/db";
+import { getAllBookings } from "../../lib/backend/db";
 
-export async function GET() {
+export async function GET(request) {
   try {
-    const { Items: bookings } = await getAllBookings("bookings");
-    
+    const { searchParams } = new URL(request.url);
+    const action = searchParams.get("action");
 
-    // Build ICS events exactly like the original Lambda implementation
+    if (action !== "calendar") {
+      return NextResponse.json({ code: "METHOD_NOT_ALLOWED" }, { status: 405 });
+    }
+
+    const { Items: bookings } = await getAllBookings("bookings");
+
     const events = [];
     for (const booking of bookings) {
-      // Correct approach: Handle date rollover
       const date = new Date(Date.parse(booking.date));
-      const rawStartHour = parseInt(booking.start, 10) ;
+      const rawStartHour = parseInt(booking.start, 10);
       const durationHours = parseInt(booking.end, 10) - parseInt(booking.start, 10);
 
       let adjustedDate = new Date(date);
       let adjustedHour = rawStartHour;
 
-      // Handle negative hours by rolling back the date
       if (rawStartHour < 0) {
         adjustedDate.setDate(adjustedDate.getDate() - 1);
-        adjustedHour = 24 + rawStartHour; // Convert -1 to 23, -2 to 22, etc.
+        adjustedHour = 24 + rawStartHour;
       }
 
       events.push({
@@ -41,25 +44,23 @@ export async function GET() {
       });
     }
 
-    
-
     const { error, value } = createEvents(events);
     if (error) {
-    
       return new NextResponse("Failed to generate calendar", { status: 500 });
     }
 
     return new NextResponse(value, {
       status: 200,
       headers: {
-        "Content-Type": "text/calendar",
+        "Content-Type": "text/calendar; charset=utf-8",
+        "Content-Disposition": "attachment; filename=makerspace.ics",
+        "Cache-Control": "no-store",
       },
     });
   } catch (err) {
     console.error("Calendar generation error:", err);
-    return NextResponse.json(
-      { code: "ERROR", msg: err.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ code: "ERROR", msg: err.message }, { status: 500 });
   }
 }
+
+
