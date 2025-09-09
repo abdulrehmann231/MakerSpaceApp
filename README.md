@@ -49,6 +49,68 @@ Open `http://localhost:3000`.
 - Public calendar feed: `GET /prod?action=calendar` (ICS download)
 - Auth is JWT-based; ensure access and refresh secrets are set in env.
 
+## MongoDB Data Model
+
+Collections used:
+
+- `users`
+  - Example document:
+    ```json
+    {
+      "key": "alice@example.com",
+      "hash": "<password-hash>",
+      "salt": "<salt>",
+      "token": "<session-token>",
+      "userdata": {
+        "firstname": "Alice",
+        "lastname": "Doe",
+        "user": "admin" // or "user"
+      }
+    }
+    ```
+  
+
+- `bookings`
+  - Example document:
+    ```json
+    {
+      "id": 1717771234567,
+      "user": "alice@example.com",
+      "date": "2025-06-01",
+      "start": 10,
+      "end": 12,
+      "npeople": 1,
+      "description": "Optional"
+    }
+    ```
+  
+
+- `settings`
+  - `availability` configuration document:
+    ```json
+    {
+      "key": "availability",
+      "spotsAvailable": [[/* 24 numbers */], /* 7 arrays total (Sun..Sat) */],
+      "holidays": ["2025-12-25", "2025-01-01"],
+      "recurHolidays": ["12-25", "01-01"]
+    }
+    ```
+
+ - `password_reset_tokens`
+   - Example document:
+     ```json
+     {
+       "email": "alice@example.com",
+       "token": "<random-reset-token>",
+       "expiresAt": "2025-06-01T12:00:00.000Z",
+       "createdAt": "2025-06-01T11:00:00.000Z",
+       "used": false,
+       "usedAt": null
+     }
+     ```
+
+Seed script: `node setup-settings.js` creates/updates the `availability` document.
+
 ## Deploy
 - Vercel: push to a repo and import the project. Add the `.env.local` variables in the Vercel dashboard (Project → Settings → Environment Variables).
 
