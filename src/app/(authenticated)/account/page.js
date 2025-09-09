@@ -84,11 +84,11 @@ export default function AccountPage() {
         showphone
       }
       const data = await setUserData(email, userData)
-      if (data && data.code === "UPDATE") {
+      if (data ) {
         console.log('profile updated')
       }
       else{
-        console.error('failed to update profile')
+        console.log('failed to update profile')
         router.push('/login')
       }
       
