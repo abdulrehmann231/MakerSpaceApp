@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { getAvailability, accountInfo, getSetting as apiGetSetting, setSetting as apiSetSetting } from '@/lib/api'
 import { useRouter } from 'next/navigation'
 import Loader from '@/components/Loader'
+import { useTheme } from '@/hooks/useTheme'
 
 export default function AvailabilityPage() {
   const [availabilityData, setAvailabilityData] = useState([])
@@ -19,6 +20,7 @@ export default function AvailabilityPage() {
   const [newHolidayDate, setNewHolidayDate] = useState("")
   const [newRecurHoliday, setNewRecurHoliday] = useState("")
   const router = useRouter()
+  const { isDarkMode, themeColor } = useTheme()
 
   useEffect(() => {
     // Check if user is admin
@@ -181,7 +183,7 @@ export default function AvailabilityPage() {
         </div>
         <div className="card mb-3 position-relative">
           {(settingsLoading || saving) && (
-            <div className="d-flex align-items-center justify-content-center position-absolute w-100 h-100" style={{top:0,left:0,background:'rgba(255,255,255,0.8)', zIndex: 2}}>
+            <div className="d-flex align-items-center justify-content-center position-absolute w-100 h-100" style={{top:0,left:0,background: isDarkMode ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)', zIndex: 2}}>
               <div className="maxui-roller">
                 <div></div>
                 <div></div>
@@ -208,9 +210,9 @@ export default function AvailabilityPage() {
               <table className="table table-sm table-bordered align-middle mb-0 week-table" role="grid" aria-label="Weekly availability grid">
                 <thead className="thead-sticky">
                   <tr>
-                    <th scope="col" className="text-nowrap sticky-col !bg-white" style={{width: '96px', backgroundColor: 'white !important'}}>Time</th>
+                    <th scope="col" className="text-nowrap sticky-col" style={{width: '96px'}}>Time</th>
                     {dayNames.map((d) => (
-                      <th scope="col" key={`head-${d}`} className="text-center !bg-white" style={{backgroundColor: 'white !important'}}>{d}</th>
+                      <th scope="col" key={`head-${d}`} className="text-center">{d}</th>
                     ))}
                   </tr>
                 </thead>
@@ -244,7 +246,7 @@ export default function AvailabilityPage() {
 
         <div className="card mb-3 position-relative">
           {settingsLoading && (
-            <div className="d-flex align-items-center justify-content-center position-absolute w-100 h-100" style={{top:0,left:0,background:'rgba(255,255,255,0.8)', zIndex: 2}}>
+            <div className="d-flex align-items-center justify-content-center position-absolute w-100 h-100" style={{top:0,left:0,background: isDarkMode ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)', zIndex: 2}}>
               <div className="maxui-roller">
                 <div></div>
                 <div></div>
@@ -305,11 +307,13 @@ export default function AvailabilityPage() {
         .week-table-wrapper{
           max-height: 384px;
           overflow: auto;
-          border: 1px solid var(--bs-border-color, #dee2e6);
+          border: 1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : '#dee2e6'};
           border-radius: 6px;
+          position: relative;
+          z-index: 1;
           /* Firefox */
           scrollbar-width: auto;
-          scrollbar-color: var(--bs-border-color, #cbd5e1) transparent;
+          scrollbar-color: ${isDarkMode ? 'rgba(255, 255, 255, 0.3)' : '#cbd5e1'} transparent;
         }
         /* WebKit scrollbars */
         :global(.week-table-wrapper::-webkit-scrollbar){
@@ -317,9 +321,9 @@ export default function AvailabilityPage() {
           height: 12px;
         }
         :global(.week-table-wrapper::-webkit-scrollbar-thumb){
-          background-color: var(--bs-border-color, #cbd5e1);
+          background-color: ${isDarkMode ? 'rgba(255, 255, 255, 0.3)' : '#cbd5e1'};
           border-radius: 10px;
-          border: 3px solid var(--bs-body-bg);
+          border: 3px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : '#ffffff'};
         }
         :global(.week-table-wrapper::-webkit-scrollbar-track){
           background: transparent;
@@ -329,7 +333,7 @@ export default function AvailabilityPage() {
           position: relative;
           table-layout: fixed;
           font-family: var(--bs-font-sans-serif);
-          color: var(--bs-body-color);
+          color: ${isDarkMode ? '#ffffff' : '#333333'};
           border-collapse: separate;
           border-spacing: 0;
         }
@@ -337,43 +341,59 @@ export default function AvailabilityPage() {
           position: sticky;
           top: 0;
           z-index: 10;
-          background: #ffffff;
-          box-shadow: inset 0 -1px 0 var(--bs-border-color, #dee2e6), 0 2px 4px rgba(0,0,0,.02);
+          background: ${isDarkMode ? '#1a1a1a' : '#ffffff'};
+          box-shadow: inset 0 -1px 0 ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : '#dee2e6'}, 0 2px 4px rgba(0,0,0,.02);
           font-weight: 600;
           background-clip: padding-box;
-          /* Ensure fully opaque header to cover cells underneath */
-          background-color: #ffffff !important;
+          color: ${isDarkMode ? '#e0e0e0' : '#333333'};
+          backdrop-filter: ${isDarkMode ? 'blur(8px)' : 'none'};
         }
         /* Sticky first column (time) */
         .sticky-col{
           position: sticky;
           left: 0;
           z-index: 9;
-          background: #ffffff;
-          box-shadow: 1px 0 0 var(--bs-border-color, #e9ecef);
+          background: ${isDarkMode ? '#1a1a1a' : '#ffffff'};
+          box-shadow: 1px 0 0 ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : '#e9ecef'};
+          color: ${isDarkMode ? '#e0e0e0' : '#333333'};
+          backdrop-filter: ${isDarkMode ? 'blur(8px)' : 'none'};
         }
         /* Stronger z-index for top-left header corner */
-        thead .sticky-col{ z-index: 11; }
+        thead .sticky-col{ 
+          z-index: 11; 
+          background: ${isDarkMode ? '#1a1a1a' : '#ffffff'};
+          backdrop-filter: ${isDarkMode ? 'blur(8px)' : 'none'};
+        }
         /* Compact row height */
         .week-table tbody td, .week-table tbody th{
           padding-top: .2rem;
           padding-bottom: .2rem;
           line-height: 1.1;
           background-clip: padding-box;
+          color: ${isDarkMode ? '#ffffff' : '#333333'};
+          position: relative;
+          z-index: 1;
         }
         /* Subtle hover highlight */
         .week-table tbody tr:hover td{
-          filter: brightness(0.985);
+          filter: ${isDarkMode ? 'brightness(1.1)' : 'brightness(0.985)'};
         }
         .cell-zero{
-          background-color: var(--bs-danger-bg-subtle, #f8d7da);
+          background-color: ${isDarkMode ? 'rgba(220, 53, 69, 0.4)' : '#f8d7da'};
         }
         .cell-positive{
-          background-color: var(--bs-success-bg-subtle, #d1e7dd);
+          background-color: ${isDarkMode ? 'rgba(25, 135, 84, 0.4)' : '#d1e7dd'};
         }
         .cell-input:focus{
-          border-color: var(--bs-primary, #0d6efd) !important;
-          background-color: var(--bs-body-bg);
+          border-color: ${themeColor === 'color-theme-blue' ? '#2CAAE6' : 
+                        themeColor === 'color-theme-red' ? '#FF4141' :
+                        themeColor === 'color-theme-green' ? '#12c150' :
+                        themeColor === 'color-theme-pink' ? '#ff0076' :
+                        themeColor === 'color-theme-yellow' ? '#ffc617' :
+                        themeColor === 'color-theme-orange' ? '#ff8900' :
+                        themeColor === 'color-theme-gray' ? '#485563' :
+                        themeColor === 'color-theme-black' ? '#333333' : '#2CAAE6'} !important;
+          background-color: ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : '#ffffff'};
         }
         .cell-input{
           min-height: 22px;
@@ -381,7 +401,8 @@ export default function AvailabilityPage() {
           padding: 0 .25rem;
           font-size: 0.875rem;
           line-height: 1.1;
-          color: var(--bs-body-color);
+          color: ${isDarkMode ? '#ffffff' : '#333333'};
+          background-color: transparent;
           overflow: hidden;
           text-overflow: ellipsis;
         }
@@ -399,10 +420,14 @@ export default function AvailabilityPage() {
           width: 14px;
           height: 14px;
           border-radius: 3px;
-          border: 1px solid var(--bs-border-color, #dee2e6);
+          border: 1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.3)' : '#dee2e6'};
         }
-        .swatch-zero{ background-color: var(--bs-danger-bg-subtle, #f8d7da); }
-        .swatch-positive{ background-color: var(--bs-success-bg-subtle, #d1e7dd); }
+        .swatch-zero{ 
+          background-color: ${isDarkMode ? 'rgba(220, 53, 69, 0.4)' : '#f8d7da'}; 
+        }
+        .swatch-positive{ 
+          background-color: ${isDarkMode ? 'rgba(25, 135, 84, 0.4)' : '#d1e7dd'}; 
+        }
         /* Responsive save bar */
         @media (max-width: 480px){
           .savebar{
