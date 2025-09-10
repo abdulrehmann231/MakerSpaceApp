@@ -20,6 +20,8 @@ export default function AccountPage() {
   const [showemail, setShowemail] = useState(false)
   const [showphone, setShowphone] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [role, setRole] = useState('')
+  
   const router = useRouter()
   useEffect(() => {
     // Load account info
@@ -31,6 +33,7 @@ export default function AccountPage() {
           setFirstname(info.firstname || "...")
           setLastname(info.lastname || "...")
           setEmail(info.key || "")
+          setRole(info.user || '')
           
           // Set user data fields if they exist
           if (info.userData) {
@@ -96,6 +99,8 @@ export default function AccountPage() {
       console.error('Error saving profile:', error)
     }
   }
+
+  
 
   if (loading) {
     return <Loader />
@@ -262,6 +267,8 @@ export default function AccountPage() {
           </form>
 
           <br />
+
+          
         </div>
   )
 }
