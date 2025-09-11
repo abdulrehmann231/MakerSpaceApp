@@ -53,7 +53,7 @@ const buildInviteEmail = (firstName, resetLink, themeColorKey = 'color-theme-blu
             </p>
             <p style="margin:0 0 8px 0;color:${muted}">If the button doesn't work, copy and paste this URL:</p>
             <p style="margin:0 0 16px 0;color:${muted};word-break:break-all">${resetLink}</p>
-            <p style="margin:0;color:${muted}">This link expires in 5 minutes.</p>
+            <p style="margin:0;color:${muted}">This link expires in 48 hours.</p>
           </div>
         </div>
       </div>
@@ -94,9 +94,9 @@ export async function POST(request) {
       user = await getUser(email, 'users')
     }
 
-    // Create password reset token (5 minutes)
+    // Create password reset token (48 hours for invites)
     const token = crypto.randomBytes(32).toString('hex')
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000)
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000)
     const tokenResult = await createPasswordResetToken(email, token, expiresAt)
     if (!tokenResult) {
       return NextResponse.json({ code: 'ERROR', msg: 'Failed to create reset token' }, { status: 500 })
