@@ -108,6 +108,19 @@ export default function Sidebar({ firstname = "User", userRole = "user" }) {
               </Link>
             </li>
           )}
+          {userRole === 'admin' && (
+            <li className="nav-item">
+              <Link 
+                href="/users" 
+                className={`sidebar-close ${pathname === '/users' ? 'active' : ''}`}
+                onClick={handleSidebarClose}
+              >
+                <div className="item-title">
+                  <i className="material-icons">group_add</i>Users
+                </div>
+              </Link>
+            </li>
+          )}
           <li className="nav-item">
             <Link 
               href="/contact" 

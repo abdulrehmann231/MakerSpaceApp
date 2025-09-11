@@ -104,11 +104,6 @@ export default function LoginPage() {
                   Forgot Password?
                 </Link>
               </div>
-              <div className="col-6 text-right">
-                <Link href="/register" className="text-white text-center mt-3">
-                  Sign up
-                </Link>
-              </div>
             </div>
           </div>
         </div>

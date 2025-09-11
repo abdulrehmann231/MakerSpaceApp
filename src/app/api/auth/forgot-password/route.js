@@ -67,7 +67,7 @@ const getPasswordResetTemplate = (firstName, resetLink, themeColor = 'color-them
             </p>
           </div>
           
-          <p style="color: ${textColor};"><strong>Important:</strong> This link will expire in 5 minutes for security reasons.</p>
+          <p style="color: ${textColor};"><strong>Important:</strong> This link will expire in 10 minutes for security reasons.</p>
           <p style="color: ${textColor};">If you didn't request this password reset, please ignore this email.</p>
           
           <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : '#eee'};">
@@ -166,8 +166,8 @@ export async function POST(request) {
     // Generate a secure random token
     const token = crypto.randomBytes(32).toString('hex')
     
-    // Set expiration time (5 minutes from now)
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000)
+    // Set expiration time (10 minutes from now)
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
     
     // Store the token in database
     const tokenResult = await createPasswordResetToken(email, token, expiresAt)
