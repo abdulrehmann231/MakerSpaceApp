@@ -192,6 +192,35 @@ export async function register(email, password, firstname, lastname) {
   }
 }
 
+// Admin: create user and send reset link
+export async function adminCreateUser(email, firstname = '', lastname = '') {
+  try {
+    const themeColor = getCookie('theme-color') || 'color-theme-blue'
+    const themeLayout = getCookie('theme-color-layout') || 'theme-light'
+    const isDarkMode = themeLayout === 'theme-dark'
+
+    const makeRequest = async () => {
+      const response = await fetch('/api/auth/create-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, firstname, lastname, themeColor, isDarkMode })
+      })
+      return response
+    }
+
+    const response = await makeRequest()
+    const data = await handleResponse(response, makeRequest)
+    if (data === false) return { code: 'UNAUTHORIZED', msg: false }
+    return data // { code: 'INVITED', msg: true }
+  } catch (error) {
+    console.error('Admin create user error:', error)
+    return { code: 'ERROR', msg: false }
+  }
+}
+
 export async function getAvailability(from, to) {
   try {
     const makeRequest = async () => {
