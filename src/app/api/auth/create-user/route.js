@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { extractUser } from '@/lib/backend/middleware'
 import { getUser, register, createPasswordResetToken, cleanupExpiredTokens } from '@/lib/backend/db'
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 
 // Theme color mapping (aligned with forgot-password)
 const themeColors = {
@@ -15,19 +15,8 @@ const themeColors = {
   'color-theme-pink': '#ED64A6'
 }
 
-// Create transporter for Nodemailer (same config as forgot-password)
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 465,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD
-    },
-    secure: true
-  })
-}
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 // Themed invite/reset email template
 const buildInviteEmail = (firstName, resetLink, themeColorKey = 'color-theme-blue', isDarkMode = false) => {
@@ -108,30 +97,17 @@ export async function POST(request) {
     const baseUrl = `${protocol}://${host}`
     const resetLink = `${baseUrl}/reset-password?token=${token}`
 
-    // Send email
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    // Send email via Resend
+    if (!process.env.RESEND_API_KEY) {
       return NextResponse.json({ code: 'ERROR', msg: 'Email service not configured' }, { status: 500 })
     }
 
-    const transporter = createTransporter()
-    await new Promise((resolve, reject) => {
-      transporter.verify(function (error, success) {
-        if (error) reject(error); else resolve(success)
-      })
-    })
-
     const { subject, html } = buildInviteEmail(user.firstname || 'User', resetLink, themeColor, isDarkMode)
-    const mailOptions = {
-      from: `Makerspace Delft <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'delivered@resend.dev',
       to: email,
       subject,
       html
-    }
-
-    await new Promise((resolve, reject) => {
-      transporter.sendMail(mailOptions, (err, info) => {
-        if (err) reject(err); else resolve(info)
-      })
     })
 
     await cleanupExpiredTokens()

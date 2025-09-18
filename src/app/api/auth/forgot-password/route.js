@@ -3,21 +3,10 @@ import { getUser } from '@/lib/backend/db'
 import { createPasswordResetToken, cleanupExpiredTokens } from '@/lib/backend/db'
 import { getCookie } from '@/lib/api'
 import crypto from 'crypto'
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 
-// Create transporter for Nodemailer
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 465,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD
-    },
-    secure: true
-  })
-}
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 // Theme color mapping
 const themeColors = {
@@ -86,50 +75,18 @@ const getPasswordResetTemplate = (firstName, resetLink, themeColor = 'color-them
 // Direct email sending function
 async function sendPasswordResetEmailDirect(email, firstName, resetLink, themeColor, isDarkMode) {
   try {
-    // Get current theme from cookies
-    
-
-    console.log(themeColor, isDarkMode)
-
-    // Check if email credentials are configured
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      throw new Error('Email service not configured')
-    }
-
-    const transporter = createTransporter()
-
-    // Verify connection
-    await new Promise((resolve, reject) => {
-      transporter.verify(function (error, success) {
-        if (error) {
-          reject(error)
-        } else {
-          resolve(success)
-        }
-      })
-    })
-
     // Generate email content
     const emailContent = getPasswordResetTemplate(firstName, resetLink, themeColor, isDarkMode)
 
-    // Send email
-    const mailOptions = {
-      from: `"Makerspace Delft" <${process.env.EMAIL_USER}>`,
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('Email service not configured')
+    }
+
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'delivered@resend.dev',
       to: email,
       subject: emailContent.subject,
       html: emailContent.html
-    }
-
-    await new Promise((resolve, reject) => {
-      transporter.sendMail(mailOptions, (err, info) => {
-        if (err) {
-          console.error(err)
-          reject(err)
-        } else {
-          console.log(info)
-          resolve(info)
-        }
-      })
     })
 
     console.log(`Password reset email sent successfully to ${email}`)
@@ -186,7 +143,7 @@ export async function POST(request) {
     // Create reset link
     const resetLink = `${baseUrl}/reset-password?token=${token}`
     
-    // Send email directly using nodemailer
+    // Send email directly 
     try {
       await sendPasswordResetEmailDirect(email, user.firstname || 'User', resetLink, themeColor, isDarkMode)
     } catch (emailError) {

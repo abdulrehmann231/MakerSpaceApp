@@ -1,21 +1,9 @@
 import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { decodeToken } from '@/lib/backend/jwt';
 import { parseCookies } from '@/lib/backend/encrypt';
-// Create transporter for Nodemailer
-const createTransporter = () => {
-  // For Gmail (you can change this to other providers)
-  return nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 465,
-    auth: {
-      user: process.env.EMAIL_USER, // Your Gmail address
-      pass: process.env.EMAIL_PASSWORD // Your Gmail app password
-    },
-    secure: true
-  });
-};
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Theme color mapping
 const themeColors = {
@@ -152,8 +140,8 @@ export async function POST(request) {
     }
 
     // Check if email credentials are configured
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      console.error('Email credentials not configured');
+    if (!process.env.RESEND_API_KEY) {
+      console.error('Resend API key not configured');
       return NextResponse.json(
         { success: false, error: 'Email service not configured' },
         { status: 500 }
@@ -184,21 +172,6 @@ export async function POST(request) {
     }
     
     const userEmail = decodedToken.email;
-
-    const transporter = createTransporter();
-
-    await new Promise((resolve, reject) => {
-      // verify connection configuration
-      transporter.verify(function (error, success) {
-          if (error) {
-             
-              reject(error);
-          } else {
-             
-              resolve(success);
-          }
-      });
-  });
 
     let emailContent;
 
@@ -231,26 +204,13 @@ export async function POST(request) {
         );
     }
 
-    // Send email
-    const mailOptions = {
-      from: `"Makerspace Delft" <${process.env.EMAIL_USER}>`,
+    // Send email via Resend
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'delivered@resend.dev',
       to: userEmail,
       subject: emailContent.subject,
       html: emailContent.html
-    };
-
-    await new Promise((resolve, reject) => {
-      // send mail
-      transporter.sendMail(mailOptions, (err, info) => {
-          if (err) {
-              console.error(err);
-              reject(err);
-          } else {
-              console.log(info);
-              resolve(info);
-          }
-      });
-  });
+    });
 
     console.log(`Email sent successfully to ${userEmail} (${type})`);
 
