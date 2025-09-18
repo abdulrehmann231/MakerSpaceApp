@@ -61,7 +61,7 @@ async function refreshAccessToken() {
 
 
 
-// Email utility functions using Nodemailer
+// Email utility functions 
 export async function sendBookingConfirmationEmail( bookingDetails) {
   try {
     // Get current theme from cookies
