@@ -35,7 +35,7 @@ export default function BookingsPage() {
       try {
         const data = await accountInfo()
         if (data && data.msg) {
-          setFirstname(data.msg.firstname || "")
+          setFirstname(data.msg.firstname || "User")
         }
         else if (data && data.code === "UNAUTHORIZED" || data && data.code === "ERROR") {
           router.push('/login')

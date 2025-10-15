@@ -14,8 +14,10 @@ export default function AuthenticatedLayout({ children }) {
   useEffect(() => {
     accountInfo().then((data) => {
       
-      if (data && data.code === 'FOUND' && data.msg && data.msg.firstname) {
-        setFirstname(data.msg.firstname)
+      if (data && data.code === 'FOUND' && data.msg) {
+        // Prefer firstname, then lastname, then email (key), fallback to "User"
+        const displayName = data.msg.firstname || "User"
+        setFirstname(displayName)
         // Set user role from the user document
         const role = data.msg.user || "user"
         console.log('User role detected:', role)
