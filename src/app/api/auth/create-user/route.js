@@ -58,17 +58,18 @@ export async function POST(request) {
     }
 
     const { email, firstname = '', lastname = '', themeColor, isDarkMode } = await request.json()
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : email
 
-    if (!email) {
+    if (!normalizedEmail) {
       return NextResponse.json({ code: 'BAD_REQUEST', msg: 'Email is required' }, { status: 400 })
     }
 
     // If user already exists, we can still re-send invite link optionally
-    let user = await getUser(email, 'users')
+    let user = await getUser(normalizedEmail, 'users')
     if (!user) {
       // Create user with no password yet; register() strips password fields
       const newUserObj = {
-        email,
+        email: normalizedEmail,
         firstname,
         lastname,
         user: 'user',
@@ -80,13 +81,13 @@ export async function POST(request) {
       if (!res || !res.insertedId) {
         return NextResponse.json({ code: 'ERROR', msg: 'Failed to create user' }, { status: 500 })
       }
-      user = await getUser(email, 'users')
+      user = await getUser(normalizedEmail, 'users')
     }
 
     // Create password reset token (48 hours for invites)
     const token = crypto.randomBytes(32).toString('hex')
     const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000)
-    const tokenResult = await createPasswordResetToken(email, token, expiresAt)
+    const tokenResult = await createPasswordResetToken(normalizedEmail, token, expiresAt)
     if (!tokenResult) {
       return NextResponse.json({ code: 'ERROR', msg: 'Failed to create reset token' }, { status: 500 })
     }
@@ -105,7 +106,7 @@ export async function POST(request) {
     const { subject, html } = buildInviteEmail(user.firstname || 'User', resetLink, themeColor, isDarkMode)
     await resend.emails.send({
       from: process.env.EMAIL_FROM || 'delivered@resend.dev',
-      to: email,
+      to: normalizedEmail,
       subject,
       html
     })
