@@ -14,6 +14,7 @@ export default function AvailabilityPage() {
   const [weekTemplate, setWeekTemplate] = useState(Array.from({ length: 7 }, () => Array(24).fill(0)))
   const [holidays, setHolidays] = useState([])
   const [recurHolidays, setRecurHolidays] = useState([])
+  const [maximum, setMaximum] = useState(5)
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
   const [settingsLoading, setSettingsLoading] = useState(false)
@@ -81,6 +82,7 @@ export default function AvailabilityPage() {
       if (cfg.spotsAvailable && Array.isArray(cfg.spotsAvailable)) setWeekTemplate(cfg.spotsAvailable)
       if (Array.isArray(cfg.holidays)) setHolidays(cfg.holidays)
       if (Array.isArray(cfg.recurHolidays)) setRecurHolidays(cfg.recurHolidays)
+      if (typeof cfg.maximum === 'number' && cfg.maximum > 0) setMaximum(cfg.maximum)
     } catch (e) {
       console.error('Error loading settings', e)
     } finally {
@@ -124,7 +126,7 @@ export default function AvailabilityPage() {
   const saveChanges = async () => {
     try {
       setSaving(true)
-      const data = await apiSetSetting('availability', { spotsAvailable: weekTemplate, holidays, recurHolidays })
+      const data = await apiSetSetting('availability', { spotsAvailable: weekTemplate, holidays, recurHolidays, maximum })
       if (!data || data.code !== 'UPDATE') throw new Error('Save failed')
       setDirty(false)
     } catch (e) {
@@ -157,10 +159,41 @@ export default function AvailabilityPage() {
   const hourIndices = Array.from({ length: 24 }, (_, i) => i)
 
   const setSlotValue = (dayIndex, hourIndex, value) => {
-    const clamped = Math.max(0, Math.min(5, Number.isFinite(value) ? value : 0))
+    const clamped = Math.max(0, Math.min(maximum, Number.isFinite(value) ? value : 0))
     setWeekTemplate(prev => {
       const copy = prev.map(day => day.slice())
       copy[dayIndex][hourIndex] = clamped
+      return copy
+    })
+    setDirty(true)
+  }
+
+  const handleMaximumChange = (newMaximum) => {
+    const oldMaximum = maximum
+    const numMax = parseInt(newMaximum, 10)
+    if (isNaN(numMax) || numMax < 1) return
+    
+    setMaximum(numMax)
+    setWeekTemplate(prev => {
+      const copy = prev.map(day => day.slice())
+      
+      if (numMax < oldMaximum) {
+        // If decreased: all values become min(maximum, oldValue)
+        for (let di = 0; di < 7; di++) {
+          for (let hi = 0; hi < 24; hi++) {
+            copy[di][hi] = Math.min(numMax, copy[di][hi] || 0)
+          }
+        }
+      } else if (numMax > oldMaximum) {
+        // If increased: all values become (oldValue == oldMaximum) ? newMaximum : oldValue
+        for (let di = 0; di < 7; di++) {
+          for (let hi = 0; hi < 24; hi++) {
+            const oldValue = copy[di][hi] || 0
+            copy[di][hi] = (oldValue === oldMaximum) ? numMax : oldValue
+          }
+        }
+      }
+      
       return copy
     })
     setDirty(true)
@@ -197,13 +230,24 @@ export default function AvailabilityPage() {
             </div>
           )}
           <div className="card-body">
-            <div className="d-flex align-items-center justify-content-between mb-2">
-              <small className="text-muted">Edit hourly capacity per weekday</small>
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <div className="d-flex align-items-center">
+                <label className="mb-0 mr-2">Maximum capacity:</label>
+                <input 
+                  type="number" 
+                  min={1} 
+                  max={100}
+                  className="form-control form-control-sm" 
+                  style={{width: '80px'}}
+                  value={maximum} 
+                  onChange={(e) => handleMaximumChange(e.target.value)}
+                />
+              </div>
               <div className="d-flex align-items-center">
                 <span className="legend-swatch swatch-zero mr-1"></span>
                 <small className="mr-3">0</small>
                 <span className="legend-swatch swatch-positive mr-1"></span>
-                <small>1–5</small>
+                <small>1–{maximum}</small>
               </div>
             </div>
             <div className="table-responsive week-table-wrapper">
@@ -227,7 +271,7 @@ export default function AvailabilityPage() {
                             <input
                               type="number"
                               min={0}
-                              max={5}
+                              max={maximum}
                               className="form-control form-control-sm text-center bg-transparent border-0 shadow-none cell-input"
                               value={value}
                               onChange={(e)=> setSlotValue(di, h, parseInt(e.target.value, 10))}
