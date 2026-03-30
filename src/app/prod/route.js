@@ -56,39 +56,47 @@ export async function GET(request) {
 
         // Create proper timezone-aware dates for Europe/Amsterdam
         const timeZone = 'Europe/Amsterdam';
-        const startDateTime = new Date(date.getTime() + startHour * 3600000);
-        const endDateTime = new Date(date.getTime() + endHour * 3600000);
         
+        // Parse date in local time context, then get DST-aware offset
+        const localYear = date.getFullYear();
+        const localMonth = date.getMonth() + 1;
+        const localDay = date.getDate();
+        
+        // Create local datetime for start and end
+        const startLocal = new Date(localYear, localMonth - 1, localDay, startHour, 0, 0, 0);
+        const endLocal = new Date(localYear, localMonth - 1, localDay, endHour, 0, 0, 0);
+        
+        // Get DST-aware offset in hours
         const getOffsetHours = (d) => {
           const iso = d.toLocaleString('en-CA', { timeZone, hour12: false }).replace(', ', 'T');
           const lie = new Date(iso + 'Z');
           return -(lie - d) / 3600000;
         };
         
-        const startOffset = getOffsetHours(startDateTime);
-        const endOffset = getOffsetHours(endDateTime);
+        const startOffset = getOffsetHours(startLocal);
+        const endOffset = getOffsetHours(endLocal);
         const offsetStr = (n) => `${n >= 0 ? '+' : ''}${String(n).padStart(2, '0')}:00`;
         
-        const startTimeString = `${startDateTime.getFullYear()}-${String(startDateTime.getMonth() + 1).padStart(2, '0')}-${String(startDateTime.getDate()).padStart(2, '0')}T${String(startDateTime.getHours()).padStart(2, '0')}:00:00${offsetStr(startOffset)}`;
-        const endTimeString = `${endDateTime.getFullYear()}-${String(endDateTime.getMonth() + 1).padStart(2, '0')}-${String(endDateTime.getDate()).padStart(2, '0')}T${String(endDateTime.getHours()).padStart(2, '0')}:00:00${offsetStr(endOffset)}`;
+        const startTimeString = `${localYear}-${String(localMonth).padStart(2, '0')}-${String(localDay).padStart(2, '0')}T${String(startHour).padStart(2, '0')}:00:00${offsetStr(startOffset)}`;
+        const endTimeString = `${localYear}-${String(localMonth).padStart(2, '0')}-${String(localDay).padStart(2, '0')}T${String(endHour).padStart(2, '0')}:00:00${offsetStr(endOffset)}`;
         
         // Parse as timezone-aware dates
-        const parsedStartDateTime = new Date(startTimeString);
-        const parsedEndDateTime = new Date(endTimeString);
+        const startDateTime = new Date(startTimeString);
+        const endDateTime = new Date(endTimeString);
 
         // Skip if date parsing failed
-        if (isNaN(parsedStartDateTime.getTime()) || isNaN(parsedEndDateTime.getTime())) {
+        if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
           console.log("Skipping booking with failed date parsing:", booking);
           continue;
         }
 
         events.push({
           start: [
-            parsedStartDateTime.getUTCFullYear(),
-            parsedStartDateTime.getUTCMonth() + 1,
-            parsedStartDateTime.getUTCDate(),
-            parsedStartDateTime.getUTCHours(),
-            parsedStartDateTime.getUTCMinutes(),
+            startDateTime.getUTCFullYear(),
+            startDateTime.getUTCMonth() + 1,
+            startDateTime.getUTCDate(),
+            startDateTime.getUTCHours(),
+            startDateTime.getUTCMinutes(),
           ],
           duration: { 
             hours: endHour - startHour, 
