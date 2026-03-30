@@ -60,7 +60,7 @@ export default function AdminBookingsPage() {
       <div className="col-12 mt-3 mb-4">
         <p className="text-uppercase font-weight-bold text-primary">Admin</p>
         <h1>
-          <span className="font-weight-light small">Future bookings in DB</span>
+          <span className="font-weight-light small">Bookings in DB (past 24h + future)</span>
           <br />
           <b className="text-primary">{firstname}</b>
         </h1>
@@ -68,9 +68,9 @@ export default function AdminBookingsPage() {
 
       {error && <p className="text-danger">{error}</p>}
 
-      <h2 className="block-title">Upcoming bookings ({bookings.length})</h2>
+      <h2 className="block-title">Past 24h + upcoming bookings ({bookings.length})</h2>
       {bookings.length === 0 ? (
-        <div className="col">no future bookings</div>
+        <div className="col">no bookings in this window</div>
       ) : (
         <ul className="list-group media-list">
           {bookings.map((booking) => (
