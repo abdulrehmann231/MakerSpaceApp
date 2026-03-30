@@ -18,6 +18,24 @@ function getTimeZoneOffset(date, timeZone) {
   return -(lie - date) / 60 / 1000;
 }
 
+function parseBookingDate(dateString) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
+  if (!match) return null;
+  return {
+    year: parseInt(match[1], 10),
+    month: parseInt(match[2], 10),
+    day: parseInt(match[3], 10),
+  };
+}
+
+function minutesToIsoOffset(minutes) {
+  const sign = minutes <= 0 ? "+" : "-";
+  const absoluteMinutes = Math.abs(minutes);
+  const hours = String(Math.floor(absoluteMinutes / 60)).padStart(2, "0");
+  const mins = String(absoluteMinutes % 60).padStart(2, "0");
+  return `${sign}${hours}:${mins}`;
+}
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -38,12 +56,12 @@ export async function GET(request) {
           continue;
         }
 
-        const date = new Date(booking.date);
+        const parsedDate = parseBookingDate(booking.date);
         const startHour = parseInt(booking.start);
         const endHour = parseInt(booking.end);
         
         // Skip if date is invalid or hours are invalid
-        if (isNaN(date.getTime()) || isNaN(startHour) || isNaN(endHour) || startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23) {
+        if (!parsedDate || isNaN(startHour) || isNaN(endHour) || startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23) {
           console.log("Skipping booking with invalid date/time:", booking);
           continue;
         }
@@ -54,10 +72,13 @@ export async function GET(request) {
           continue;
         }
 
-        // Create proper timezone-aware dates for Europe/Amsterdam
-        // October 26, 2025 is after DST transition, so it's CET (UTC+1)
-        const startTimeString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(startHour).padStart(2, '0')}:00:00+01:00`;
-        const endTimeString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(endHour).padStart(2, '0')}:00:00+01:00`;
+        const datePrefix = `${parsedDate.year}-${String(parsedDate.month).padStart(2, "0")}-${String(parsedDate.day).padStart(2, "0")}`;
+        const startUtcProbe = new Date(Date.UTC(parsedDate.year, parsedDate.month - 1, parsedDate.day, startHour, 0, 0));
+        const endUtcProbe = new Date(Date.UTC(parsedDate.year, parsedDate.month - 1, parsedDate.day, endHour, 0, 0));
+        const startOffset = minutesToIsoOffset(getTimeZoneOffset(startUtcProbe, "Europe/Amsterdam"));
+        const endOffset = minutesToIsoOffset(getTimeZoneOffset(endUtcProbe, "Europe/Amsterdam"));
+        const startTimeString = `${datePrefix}T${String(startHour).padStart(2, "0")}:00:00${startOffset}`;
+        const endTimeString = `${datePrefix}T${String(endHour).padStart(2, "0")}:00:00${endOffset}`;
         
         // Parse as timezone-aware dates
         const startDateTime = new Date(startTimeString);
@@ -69,6 +90,7 @@ export async function GET(request) {
           continue;
         }
 
+        const durationMinutes = Math.max(0, Math.round((endDateTime - startDateTime) / 60000));
         events.push({
           start: [
             startDateTime.getUTCFullYear(),
@@ -77,9 +99,9 @@ export async function GET(request) {
             startDateTime.getUTCHours(),
             startDateTime.getUTCMinutes(),
           ],
-          duration: { 
-            hours: endDateTime.getUTCHours() - startDateTime.getUTCHours(), 
-            minutes: endDateTime.getUTCMinutes() - startDateTime.getUTCMinutes() 
+          duration: {
+            hours: Math.floor(durationMinutes / 60),
+            minutes: durationMinutes % 60,
           },
           title: `Booking for ${booking.user} (${booking.npeople})`,
           description: booking.description || "No description",
