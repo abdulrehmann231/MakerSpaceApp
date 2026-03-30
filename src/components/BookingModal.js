@@ -72,7 +72,7 @@ export default function BookingModal() {
     }
 
     const date = new Date()
-    const time = parseInt(date.toLocaleString('en-GB', { hour: '2-digit', timeZone: 'Europe/Athens' }))
+    const time = parseInt(date.toLocaleString('en-GB', { hour: '2-digit', timeZone: 'Europe/Amsterdam' }))
     
     const newDisabledStartTimes = dayBookingsArray.map((e, i) => {
       return selectedPeople > parseInt(e) || (selectedDayValue == 0 && i < time + 2)
