@@ -90,8 +90,9 @@ export default function BookingsPage() {
   }
 
   const printBooking = (booking, filter) => {
-    const oneHour = 1000 * 60 * 60
-    const bookingTime = Date.parse(booking.date) + parseInt(booking.start) * oneHour
+    const bookingDate = new Date(booking.date);
+    bookingDate.setHours(parseInt(booking.start), 0, 0, 0);
+    const bookingTime = bookingDate.getTime();
     const date = new Date()
     const time = date
 

@@ -55,31 +55,44 @@ export async function GET(request) {
         }
 
         // Create proper timezone-aware dates for Europe/Amsterdam
-        // October 26, 2025 is after DST transition, so it's CET (UTC+1)
-        const startTimeString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(startHour).padStart(2, '0')}:00:00+01:00`;
-        const endTimeString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(endHour).padStart(2, '0')}:00:00+01:00`;
+        const timeZone = 'Europe/Amsterdam';
+        const startDateTime = new Date(date.getTime() + startHour * 3600000);
+        const endDateTime = new Date(date.getTime() + endHour * 3600000);
+        
+        const getOffsetHours = (d) => {
+          const iso = d.toLocaleString('en-CA', { timeZone, hour12: false }).replace(', ', 'T');
+          const lie = new Date(iso + 'Z');
+          return -(lie - d) / 3600000;
+        };
+        
+        const startOffset = getOffsetHours(startDateTime);
+        const endOffset = getOffsetHours(endDateTime);
+        const offsetStr = (n) => `${n >= 0 ? '+' : ''}${String(n).padStart(2, '0')}:00`;
+        
+        const startTimeString = `${startDateTime.getFullYear()}-${String(startDateTime.getMonth() + 1).padStart(2, '0')}-${String(startDateTime.getDate()).padStart(2, '0')}T${String(startDateTime.getHours()).padStart(2, '0')}:00:00${offsetStr(startOffset)}`;
+        const endTimeString = `${endDateTime.getFullYear()}-${String(endDateTime.getMonth() + 1).padStart(2, '0')}-${String(endDateTime.getDate()).padStart(2, '0')}T${String(endDateTime.getHours()).padStart(2, '0')}:00:00${offsetStr(endOffset)}`;
         
         // Parse as timezone-aware dates
-        const startDateTime = new Date(startTimeString);
-        const endDateTime = new Date(endTimeString);
+        const parsedStartDateTime = new Date(startTimeString);
+        const parsedEndDateTime = new Date(endTimeString);
 
         // Skip if date parsing failed
-        if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+        if (isNaN(parsedStartDateTime.getTime()) || isNaN(parsedEndDateTime.getTime())) {
           console.log("Skipping booking with failed date parsing:", booking);
           continue;
         }
 
         events.push({
           start: [
-            startDateTime.getUTCFullYear(),
-            startDateTime.getUTCMonth() + 1,
-            startDateTime.getUTCDate(),
-            startDateTime.getUTCHours(),
-            startDateTime.getUTCMinutes(),
+            parsedStartDateTime.getUTCFullYear(),
+            parsedStartDateTime.getUTCMonth() + 1,
+            parsedStartDateTime.getUTCDate(),
+            parsedStartDateTime.getUTCHours(),
+            parsedStartDateTime.getUTCMinutes(),
           ],
           duration: { 
-            hours: endDateTime.getUTCHours() - startDateTime.getUTCHours(), 
-            minutes: endDateTime.getUTCMinutes() - startDateTime.getUTCMinutes() 
+            hours: endHour - startHour, 
+            minutes: 0 
           },
           title: `Booking for ${booking.user} (${booking.npeople})`,
           description: booking.description || "No description",
