@@ -129,6 +129,7 @@ export async function sendWelcomeEmail(userEmail, firstName) {
 // API functions for Next.js backend
 export async function signin(email, password) {
   try {
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : email;
     const makeRequest = async () => {
       const response = await fetch('/api/auth/signin', {
         method: 'POST',
@@ -136,7 +137,7 @@ export async function signin(email, password) {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email: normalizedEmail, password })
       });
       return response;
     };
@@ -170,6 +171,7 @@ export async function signout() {
 
 export async function register(email, password, firstname, lastname) {
   try {
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : email;
     const makeRequest = async () => {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -177,7 +179,7 @@ export async function register(email, password, firstname, lastname) {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ email, password, firstname, lastname })
+        body: JSON.stringify({ email: normalizedEmail, password, firstname, lastname })
       });
       return response;
     };
@@ -195,6 +197,7 @@ export async function register(email, password, firstname, lastname) {
 // Admin: create user and send reset link
 export async function adminCreateUser(email, firstname = '', lastname = '') {
   try {
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : email;
     const themeColor = getCookie('theme-color') || 'color-theme-blue'
     const themeLayout = getCookie('theme-color-layout') || 'theme-light'
     const isDarkMode = themeLayout === 'theme-dark'
@@ -206,7 +209,7 @@ export async function adminCreateUser(email, firstname = '', lastname = '') {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ email, firstname, lastname, themeColor, isDarkMode })
+        body: JSON.stringify({ email: normalizedEmail, firstname, lastname, themeColor, isDarkMode })
       })
       return response
     }

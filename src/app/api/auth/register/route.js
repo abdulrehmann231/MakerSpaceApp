@@ -5,11 +5,12 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const { email, password, firstname, lastname } = body;
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : email;
     
     // Call the migrated postClient function
     const result = await postClient('users', {
       body: { 
-        email, 
+        email: normalizedEmail, 
         newpassword: password, 
         firstname, 
         lastname, 

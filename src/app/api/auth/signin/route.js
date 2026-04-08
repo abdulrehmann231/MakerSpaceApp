@@ -5,10 +5,11 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const { email, password } = body;
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : email;
     
     // Call the migrated postClient function
     const result = await postClient('users', {
-      body: { email, password, createaccount: false },
+      body: { email: normalizedEmail, password, createaccount: false },
       headers: { cookie: request.headers.get('cookie') }
     });
 
